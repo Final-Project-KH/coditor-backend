@@ -2,12 +2,10 @@ package com.kh.totalproject.controller;
 
 
 import com.kh.totalproject.dto.request.SaveUserRequest;
-import com.kh.totalproject.dto.response.ApiResponse;
 import com.kh.totalproject.dto.response.UserInfoResponse;
 import com.kh.totalproject.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 // 실제 이름 포함?
-//
+// 프로필 이미지 추가?
 @Entity
 @Table(name="user", uniqueConstraints = {
         @UniqueConstraint(name = "unique_email", columnNames = "email"),})
