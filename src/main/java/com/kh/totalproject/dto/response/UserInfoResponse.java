@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class UserInfoResponse {
-    private Long userId; // user ID 필요?
+    private Long id; // user ID 필요?
     private String email;
     private String nickname;
     private UserStatus userStatus;

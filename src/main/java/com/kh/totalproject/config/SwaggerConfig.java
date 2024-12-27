@@ -8,11 +8,12 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class SwaggerConfig {
-    // localhost:8111/swagger-ui/index.html
+public class SwaggerConfig implements WebMvcConfigurer {
+    // localhost:8111/swagger-ui/index.html#
     @Bean
     public OpenAPI customOpenAPI(){
         return new OpenAPI()
@@ -20,6 +21,12 @@ public class SwaggerConfig {
                         .title("Total Project API")
                         .version("v0")
                         .description("API Swagger"));
+    }
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/")
+                .setCachePeriod(3600); // 캐시 유지 시간 (초 단위)
     }
 //    @Bean
 //    public OpenAPI customOpenAPI() {

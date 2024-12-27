@@ -46,6 +46,7 @@ public class User {
         if (userStatus == null){
             this.userStatus = UserStatus.USER;
         }
+        else this.userStatus = UserStatus.ADMIN;
     }
 
     @CreatedDate

@@ -84,7 +84,7 @@ public class UserService {
 
     private UserInfoResponse convertToUserInfoResponse(User user) {
         return UserInfoResponse.builder()
-                .userId(user.getId())
+                .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .userStatus(user.getUserStatus())
