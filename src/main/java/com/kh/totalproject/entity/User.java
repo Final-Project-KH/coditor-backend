@@ -34,7 +34,7 @@ public class User {
     @Size(min = 5, max = 50, message = "이메일은 5자 이상, 50자 이하(영어 기준)")
     private String email;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false)
     @Size(min = 8, max = 50, message = "비밀번호는 8자 이상, 50자 이하")
     private String password;
 
@@ -55,5 +55,14 @@ public class User {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
-    
+
+    @Builder // NoArgsConstructor가 있어야함
+    public User(String email, String nickname, String password, UserStatus userStatus){
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.userStatus = userStatus;
+        this.registeredAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }
