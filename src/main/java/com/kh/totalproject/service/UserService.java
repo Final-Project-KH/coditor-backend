@@ -1,12 +1,15 @@
 package com.kh.totalproject.service;
 
 
+import com.kh.totalproject.dto.request.SaveAdminRequest;
 import com.kh.totalproject.dto.request.SaveUserRequest;
 import com.kh.totalproject.dto.response.UserInfoResponse;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,11 +17,13 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Transactional
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
-    
+    private final PasswordEncoder passwordEncoder;
+
     // 회원 가입 여부
     public boolean isUser(String email){
         return userRepository.existsByEmail(email);
@@ -27,13 +32,16 @@ public class UserService {
     
     // 회원 가입 (반환 타입 - UserInfoResponse)
     public UserInfoResponse saveUser(SaveUserRequest requestDto){
-        User user = new User();
-        user.setPassword(requestDto.getPassword());
-        user.setEmail(requestDto.getEmail());
-        user.setNickname(requestDto.getNickname());
-        userRepository.save(user);
-
-        return convertToUserInfoResponse(user);
+        User user = requestDto.toEntity(passwordEncoder);
+        log.info("PasswordEncoder : {}", passwordEncoder.getClass());
+        return UserInfoResponse.of(userRepository.save(user));
+    }
+    
+    // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
+    public UserInfoResponse saveAdmin(SaveAdminRequest requestDto){
+        User user = requestDto.toEntity(passwordEncoder);
+        log.info("PasswordEncoder : {}", passwordEncoder.getClass());
+        return UserInfoResponse.of(userRepository.save(user));
     }
 
     // 회원 가입 (반환 타입 - boolean)

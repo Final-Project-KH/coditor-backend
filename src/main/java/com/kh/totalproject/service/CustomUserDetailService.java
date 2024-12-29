@@ -16,25 +16,25 @@ import java.util.Collections;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class CustomUserDetailService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public CustomUserDetailService(UserRepository userRepository){
-        this.userRepository = userRepository;
-    }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found : " + email));
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException{
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found : " + userId));
 
         return new CustomUserDetails(
+                user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
                 user.getId(),
-                Collections.singleton(new SimpleGrantedAuthority(user.getUserStatus().name()))
+                user.getPassword(),
+                Collections.singleton(new SimpleGrantedAuthority(user.getUserStatus().toString())  )
         );
     }
 }

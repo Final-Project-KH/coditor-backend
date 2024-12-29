@@ -23,8 +23,12 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="user_id")
+    @Column(name="user_key")
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 30)
+    @Size(min = 5, max = 30, message = "아이디는 5자 이상, 30자 이하 (영어 기준)")
+    private String userId;
 
     @Column(nullable = false, unique = true, length = 30)
     @Size(min = 4, max = 50, message = "닉네임은 1자 이상, 16자 이하(한글 기준)")
@@ -35,7 +39,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @Size(min = 8, max = 50, message = "비밀번호는 8자 이상, 50자 이하")
+    @Size(min = 8, max = 255, message = "비밀번호는 8자 이상, 50자 이하")
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -57,7 +61,8 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder // NoArgsConstructor가 있어야함
-    public User(String email, String nickname, String password, UserStatus userStatus){
+    public User(String userId, String email, String nickname, String password, UserStatus userStatus){
+        this.userId = userId;
         this.email = email;
         this.password = password;
         this.nickname = nickname;

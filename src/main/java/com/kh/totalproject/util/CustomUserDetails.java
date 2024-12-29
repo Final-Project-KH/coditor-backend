@@ -15,20 +15,24 @@ import java.util.Collection;
 @Setter
 public class CustomUserDetails implements UserDetails {
 
-    private final Long userId;
+    private final Long id;
+    private final String userId;
     private final String email;
     private final String nickname;
+    private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(String email, String nickname, Long userId, Collection<? extends GrantedAuthority> authorities){
+    public CustomUserDetails(String userId, String email, String nickname, Long id, String password, Collection<? extends GrantedAuthority> authorities){
         this.email = email;
         this.nickname = nickname;
         this.userId = userId;
+        this.id = id;
+        this.password = password;
         this.authorities = authorities;
     }
     @Override
     public String getUsername(){
-        return email;
+        return userId;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class CustomUserDetails implements UserDetails {
     }
     @Override
     public String getPassword(){
-        return null;
+        return password;
     }
     @Override
     public boolean isAccountNonExpired() {

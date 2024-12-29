@@ -31,10 +31,13 @@ public class JwtUtil {
         long now = (new Date()).getTime();
         Date accessTokenExpiresIn = new Date(now + EXPIRATION_TIME);
 
+
         String accessToken =  Jwts.builder()
-                .setSubject(String.valueOf(userDetails.getUserId()))
-                .setIssuedAt(new Date())
-                .setExpiration(accessTokenExpiresIn)
+                .subject(String.valueOf(userDetails.getId()))
+                .claim("nickname", userDetails.getNickname())
+                .claim("authorities", userDetails.getAuthorities())
+                .issuedAt(new Date())
+                .expiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
         return TokenResponse.builder()

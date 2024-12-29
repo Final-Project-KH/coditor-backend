@@ -1,6 +1,7 @@
 package com.kh.totalproject.controller;
 
 
+import com.kh.totalproject.dto.request.SaveAdminRequest;
 import com.kh.totalproject.dto.request.SaveUserRequest;
 import com.kh.totalproject.dto.response.UserInfoResponse;
 import com.kh.totalproject.service.UserService;
@@ -20,10 +21,17 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
-    // 회원가입
+    // 회원가입 (유저)
     @PostMapping
     public ResponseEntity<UserInfoResponse> handleSignUp(@RequestBody SaveUserRequest requestDto) {
         UserInfoResponse responseDataDto = userService.saveUser(requestDto);
+        return ResponseEntity.ok(responseDataDto);
+    }
+
+    // 회원가입 (관리자)
+    @PostMapping("/admin")
+    public ResponseEntity<UserInfoResponse> handleSignUpAdmin(@RequestBody SaveAdminRequest requestDto) {
+        UserInfoResponse responseDataDto = userService.saveAdmin(requestDto);
         return ResponseEntity.ok(responseDataDto);
     }
     
