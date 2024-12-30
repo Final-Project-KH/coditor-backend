@@ -43,29 +43,4 @@ public class SwaggerConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/META-INF/resources/webjars/")
                 .setCachePeriod(3600); // 캐시 유지 시간 (초 단위)
     }
-//    @Bean
-//    public OpenAPI customOpenAPI() {
-//        return new OpenAPI()
-//                .info(new Info()
-//                        .title("Total Project API")
-//                        .version("v1.0.0")
-//                        .description("API Documentation with Swagger"))
-//                .components(new Components()
-//                        .addSecuritySchemes("Bearer Authentication",
-//                                new SecurityScheme()
-//                                        .type(SecurityScheme.Type.HTTP)
-//                                        .scheme("bearer")
-//                                        .bearerFormat("JWT")))
-//                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"));
-//    }
-//    @Bean
-//    public WebMvcConfigurer corsConfigurer() {
-//        return new WebMvcConfigurer() {
-//            @Override
-//            public void addCorsMappings(CorsRegistry registry){
-//                registry.addMapping("/v3/api-docs/**").allowedOrigins("*");
-//                registry.addMapping("/swagger-ui/**").allowedOrigins("*");
-//            }
-//        };
-//    }
 }

@@ -83,8 +83,9 @@ public class UserService {
 
     public UserInfoResponse getUserInfo(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-        return convertToUserInfoResponse(user);
+        return convertToUserNicknameEmailResponse(user);
     }
+
 
     public User getById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
@@ -99,6 +100,13 @@ public class UserService {
                 .userStatus(user.getUserStatus())
                 .registeredAt(user.getRegisteredAt())
                 .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
+    private UserInfoResponse convertToUserNicknameEmailResponse(User user) {
+        return UserInfoResponse.builder()
+                .email(user.getEmail())
+                .nickname(user.getNickname())
                 .build();
     }
 

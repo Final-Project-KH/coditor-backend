@@ -4,6 +4,7 @@ package com.kh.totalproject.controller;
 import com.kh.totalproject.dto.request.SaveAdminRequest;
 import com.kh.totalproject.dto.request.SaveUserRequest;
 import com.kh.totalproject.dto.response.UserInfoResponse;
+import com.kh.totalproject.entity.User;
 import com.kh.totalproject.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
