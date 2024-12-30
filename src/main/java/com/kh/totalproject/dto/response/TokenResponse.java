@@ -10,5 +10,7 @@ import lombok.*;
 public class TokenResponse {
     private String grantType;
     private String accessToken;
-    private Long tokenExpiresIn;
+    private Long accessTokenExpiresIn; //
+    private String refreshToken; // Refresh Token
+    private Long refreshTokenExpiresIn;
 }

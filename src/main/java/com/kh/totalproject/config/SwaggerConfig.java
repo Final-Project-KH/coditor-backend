@@ -18,11 +18,24 @@ public class SwaggerConfig implements WebMvcConfigurer {
     // localhost:8111/swagger-ui/index.html#
     @Bean
     public OpenAPI customOpenAPI(){
+
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("Authorization")
+                .in(SecurityScheme.In.HEADER);
+
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList("JWT");
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Total Project API")
                         .version("v0")
-                        .description("API Swagger"));
+                        .description("API Swagger"))
+                .addSecurityItem(securityRequirement)
+                .schemaRequirement("JWT", securityScheme);
     }
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

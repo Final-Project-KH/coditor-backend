@@ -22,7 +22,7 @@ public class UserController {
     private final UserService userService;
 
     // 회원가입 (유저)
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<UserInfoResponse> handleSignUp(@RequestBody SaveUserRequest requestDto) {
         UserInfoResponse responseDataDto = userService.saveUser(requestDto);
         return ResponseEntity.ok(responseDataDto);

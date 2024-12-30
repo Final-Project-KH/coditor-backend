@@ -67,7 +67,5 @@ public class User {
         this.password = password;
         this.nickname = nickname;
         this.userStatus = userStatus;
-        this.registeredAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 }

@@ -93,6 +93,7 @@ public class UserService {
     private UserInfoResponse convertToUserInfoResponse(User user) {
         return UserInfoResponse.builder()
                 .id(user.getId())
+                .userId(user.getUserId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .userStatus(user.getUserStatus())
@@ -103,6 +104,7 @@ public class UserService {
 
     private User convertDtoToEntity(SaveUserRequest requestDto) {
         User user = new User();
+        user.setUserId(requestDto.getUserId());
         user.setEmail(requestDto.getEmail());
         user.setNickname(requestDto.getNickname());
         user.setPassword(requestDto.getPassword());
