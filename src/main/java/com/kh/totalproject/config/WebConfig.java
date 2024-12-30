@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-// CORS 설정
+// 기본 CORS 설정 (Security CORS 설정은 따로 필요함)
 // Controller 에 "http://localhost:3000" 명시할 필요 없이 바로 / Start 하면 됨
 // Flask url / React url path를 잘 구분하는 것이 중요
 @Configuration

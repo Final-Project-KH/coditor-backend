@@ -1,10 +1,6 @@
 package com.kh.totalproject.util;
 
-
-import com.kh.totalproject.constant.UserStatus;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

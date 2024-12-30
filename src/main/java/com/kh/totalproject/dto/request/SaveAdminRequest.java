@@ -13,13 +13,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveAdminRequest {
+public class SaveAdminRequest { // 관리자 회원가입 Request Dto
     private String userId;
     private String email;
     private String password;
     private String nickname;
-    private UserStatus userStatus;
-
+    private UserStatus userStatus; // Admin 회원가입은 userStatus 추가 
+    // userStatus 값이 null 만 아니면 자동으로 Admin 권한으로 계정 생성됨
+    
+    // Admin 저장 시 password 는 암호화하여 데이터베이스 저장
     public User toEntity(PasswordEncoder passwordEncoder){
         return User.builder()
                 .userId(userId)

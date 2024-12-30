@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 // 실제 이름 포함?
 // 프로필 이미지 추가?
+// Refresh Token 데이터베이스에 저장 필요?
 @Entity
 @Table(name="user", uniqueConstraints = {
         @UniqueConstraint(name = "unique_email", columnNames = "email"),})
@@ -37,7 +38,8 @@ public class User {
     @Column(nullable = false, length = 50)
     @Size(min = 5, max = 50, message = "이메일은 5자 이상, 50자 이하(영어 기준)")
     private String email;
-
+    
+    // 암호화 하기 때문에 max 값 255로 설정
     @Column(nullable = false)
     @Size(min = 8, max = 255, message = "비밀번호는 8자 이상, 50자 이하")
     private String password;
@@ -60,7 +62,7 @@ public class User {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @Builder // NoArgsConstructor가 있어야함
+    @Builder // NoArgsConstructor 가 있어야함
     public User(String userId, String email, String nickname, String password, UserStatus userStatus){
         this.userId = userId;
         this.email = email;

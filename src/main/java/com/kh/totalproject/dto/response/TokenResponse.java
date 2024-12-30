@@ -9,8 +9,8 @@ import lombok.*;
 @Builder
 public class TokenResponse {
     private String grantType;
-    private String accessToken;
-    private Long accessTokenExpiresIn; //
+    private String accessToken; // Access Token
+    private Long accessTokenExpiresIn; // Access Token 만기일
     private String refreshToken; // Refresh Token
-    private Long refreshTokenExpiresIn;
+    private Long refreshTokenExpiresIn; // Refresh Token 만기일
 }

@@ -22,41 +22,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    // 회원 가입 여부
-    public boolean isUser(String email){
-        return userRepository.existsByEmail(email);
-        // 회원 가입 진행 중 email 확인 (선행 메소드)
-    }
-    
-    // 회원 가입 (반환 타입 - UserInfoResponse)
-    public UserInfoResponse saveUser(SaveUserRequest requestDto){
-        User user = requestDto.toEntity(passwordEncoder);
-        log.info("PasswordEncoder : {}", passwordEncoder.getClass());
-        return UserInfoResponse.of(userRepository.save(user));
-    }
-    
-    // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
-    public UserInfoResponse saveAdmin(SaveAdminRequest requestDto){
-        User user = requestDto.toEntity(passwordEncoder);
-        log.info("PasswordEncoder : {}", passwordEncoder.getClass());
-        return UserInfoResponse.of(userRepository.save(user));
-    }
-
-    // 회원 가입 (반환 타입 - boolean)
-    public boolean signUp(SaveUserRequest requestDto){
-        if(isUser(requestDto.getEmail())){
-            User user = convertDtoToEntity(requestDto);
-            userRepository.save(user);
-            return true;
-        }
-        else return false;
-    }
-
+    // 회원정보 수정 (비밀번호 변경 시에 데이터베이스에 암호화되어서 들어가는지 확인 필요)
     public UserInfoResponse update(Long id, SaveUserRequest requestDto) {
         User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-        if (requestDto.getPassword() != null) {
+        if (requestDto.getPassword() != null) { // 이 부분 기존 비밀번호와 일치하지 않으면으로 변경? (암호화 방식 비교)
             user.setPassword(requestDto.getPassword());
         }
 
@@ -68,28 +38,27 @@ public class UserService {
         userRepository.saveAndFlush(user);
         return convertToUserInfoResponse(user);
     }
-
+    
+    // 회원정보 삭제 (삭제하시겠습니까? (삭제 전에 필요))
     public UserInfoResponse delete(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
         userRepository.delete(user);
         return convertToUserInfoResponse(user);
     }
 
+    // 전체 유저 정보 가져오기 (Admin 권한으로 변경하거나 삭제 필요)
     public List<UserInfoResponse> getUserInfoAll() {
         return userRepository.findAll().stream()
                 .map(this::convertToUserInfoResponse)
                 .collect(Collectors.toList());
     }
-
+    
+    // 단일 유저 정보 가져오기
     public UserInfoResponse getUserInfo(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
         return convertToUserNicknameEmailResponse(user);
     }
 
-
-    public User getById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-    }
 
     private UserInfoResponse convertToUserInfoResponse(User user) {
         return UserInfoResponse.builder()

@@ -28,7 +28,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket' // websocket
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6' // jwt
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security' // Spring Security
 	implementation 'com.opencsv:opencsv:5.7.1' // csv 관련 dependency
 	implementation 'com.google.firebase:firebase-admin:9.4.1' // firebase
 	implementation 'com.fasterxml.jackson.core:jackson-databind' // flask dependency
@@ -38,7 +38,7 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok' // test 환경 lombok 적용
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6' //jwt
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6' // jwt
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6' // JSON 처리 라이브러리
 	annotationProcessor 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok' // test 환경 lombok 적용
