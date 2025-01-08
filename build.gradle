@@ -44,6 +44,12 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok' // test 환경 lombok 적용
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'		// 구글 OAuth2 로그인 기능을 사용
+	implementation 'org.springframework.security:spring-security-oauth2-jose:5.5.0'
+	implementation 'org.springframework.security:spring-security-oauth2-core:5.5.0'
+
+
 }
 
 tasks.named('test') {

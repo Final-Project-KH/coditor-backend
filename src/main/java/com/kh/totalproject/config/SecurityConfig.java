@@ -1,6 +1,5 @@
 package com.kh.totalproject.config;
 
-
 import com.kh.totalproject.util.JwtAccessDeniedHandler;
 import com.kh.totalproject.util.JwtAuthenticationEntryPoint;
 import com.kh.totalproject.util.JwtFilter;
@@ -8,12 +7,22 @@ import com.kh.totalproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2LoginAuthenticationProvider;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -27,61 +36,77 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    
-    // Swagger 접근 Issue
-    // 1. 운영 환경에서는 Swagger 비활성화
-    // 2. Spring Security 로 관리자만 접근 허용
-    
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Security Cors 정책 -> React / Flask
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // Spring Security CSRF(Cross-Site Request Forgery) 비활성화 -> 대신 JWT 인증으로 대체
-                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정
+                .csrf(AbstractHttpConfigurer::disable) // CSRF 비활성화
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 요청 인증 및 권한 설정
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 무상태 세션 정책
                 .authorizeHttpRequests(auth -> auth
-                        // 특정 URL 패턴에 대해 접근 허용 (permitAll)
                         .requestMatchers(
-                                "/v3/api-docs/**", // swagger path
+                                "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui/index.html",
-                                "/auth/**" // auth 이외에는 전부 JWT 인증 권한 요구?
-                                // 회원이 아니더라도 이동 가능한 페이지 정해야함
+                                "/auth/**",
+                                "/auth/google"
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
-
                 )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler))
-                // JWT 인증 필터 추가
-                // 요청이 UsernamePasswordAuthenticationFilter 전에 JWT 필터를 통해 인증되도록 설정
-                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
-//                .headers(headers -> headers // 보안 헤더 비활성화
-//                        .frameOptions(frameOptions -> frameOptions.disable()) // X-Frame-Options 비활성화
-//                        .contentTypeOptions(contentTypeOptions -> contentTypeOptions.disable())); // X-Content-Type-Options 비활성화
+                        .accessDeniedHandler(jwtAccessDeniedHandler)) // 예외 처리
+                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class) // JWT 필터
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/oauth2/authorization")) // OAuth2 인증 경로 설정
+                        .tokenEndpoint(token -> token
+                                .accessTokenResponseClient(accessTokenResponseClient())) // 토큰 엔드포인트 설정
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService())) // 사용자 정보 엔드포인트 설정
+                );
 
         return http.build();
     }
+
+    // OAuth2AccessTokenResponseClient Bean 추가
+    @Bean
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+        return new DefaultAuthorizationCodeTokenResponseClient();
+    }
+
+    // OAuth2UserService Bean 설정
+    @Bean
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService() {
+        return new DefaultOAuth2UserService(); // 기본 OAuth2UserService 사용
+    }
+
+    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000"); // 허용할 Origin
+        configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedOrigin("http://localhost:5000");
-        configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
-        configuration.addAllowedHeader("*"); // 모든 헤더 허용
-        configuration.setAllowCredentials(true); // 쿠키 허용
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 대해 설정
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
+    // 비밀번호 인코더
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // AuthenticationManager Bean 등록
+    @Bean
+    public AuthenticationManager authenticationManagerBean(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        return authenticationManagerBuilder.build();
     }
 }
