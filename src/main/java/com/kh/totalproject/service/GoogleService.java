@@ -56,23 +56,27 @@ public class GoogleService {
         // 이메일로 기존 사용자 검색, 없으면 새 사용자 생성
         log.info("이메일 {} 로 기존 사용자 검색", Optional.ofNullable(user.getAttribute("email")));
         User member = userRepository.findByEmail(user.getAttribute("email"))
+                .map(existingUser -> {
+                    log.info("이미 존재하는 이메일입니다: {}", existingUser.getEmail());
+                    return existingUser;
+                })
                 .orElseGet(() -> {
                     log.info("기존 사용자가 없으므로 새 사용자 생성");
                     return createNewMember(user);
                 });
 
         // AuthenticationToken 생성 및 인증 처리
-        log.info("구글 인증 처리 시작");
-        OAuth2AuthenticationToken authenticationToken = new OAuth2AuthenticationToken(
-                user, Collections.singleton(new SimpleGrantedAuthority("USER")), "email"
-        );
+//        log.info("구글 인증 처리 시작");
+//        OAuth2AuthenticationToken authenticationToken = new OAuth2AuthenticationToken(
+//                user, Collections.singleton(new SimpleGrantedAuthority("USER")), "email"
+//        );
 
         // 인증 처리
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+//        Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
         // JWT 토큰 생성
         log.info("JWT 토큰 생성 완료");
-        return jwtUtil.generateToken(authentication);
+        return jwtUtil.generateTokenFromUser(member);
     }
 
     private OAuth2User validateAndExtractUserInfo(String idToken) {
@@ -106,20 +110,14 @@ public class GoogleService {
         log.info("새 사용자 생성 시작");
         User member = new User();
         String email = user.getAttribute("email");
-
-        // Extract the username part (before @)
         String usernamePart = email.split("@")[0];
-
-        // Extract the domain part (between @ and .com)
         String domainPart = email.split("@")[1].split("\\.")[0];
-
-        // Combine to create userId
         String userId = usernamePart + domainPart;
 
         member.setEmail(email);
         member.setUserId(userId); // Set userId as combination of username and domain part
         member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));
-        member.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // 임시 비밀번호 생성
+        member.setPassword(passwordEncoder.encode(userId + "!!")); // userId + "!!"로 비밀번호 생성
         member.setUserStatus(UserStatus.USER);
 
         log.info("새 사용자 정보 저장: 사용자 ID = {}, 이메일 = {}", userId, email);

@@ -105,8 +105,15 @@ public class SecurityConfig {
 
     // AuthenticationManager Bean 등록
     @Bean
-    public AuthenticationManager authenticationManagerBean(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+
+        // Ensure OAuth2LoginAuthenticationProvider is added
+        authenticationManagerBuilder.authenticationProvider(new OAuth2LoginAuthenticationProvider(
+                new DefaultAuthorizationCodeTokenResponseClient(), new DefaultOAuth2UserService()));
+
         return authenticationManagerBuilder.build();
     }
+
 }
