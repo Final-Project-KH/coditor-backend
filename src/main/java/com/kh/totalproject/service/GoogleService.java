@@ -46,33 +46,25 @@ public class GoogleService {
 
         // ID Token 검증 및 사용자 정보 추출
         log.info("구글 ID 토큰 검증 시작");
-        OAuth2User user = validateAndExtractUserInfo(idToken);
+        OAuth2User user = validateAndExtractUserInfo(idToken);  // ID 토큰 검증 및 사용자 정보 추출
 
         if (user == null) {
             log.error("구글 사용자 정보 가져오기 실패");
             throw new IllegalArgumentException("구글 사용자 정보 가져오기 실패");
         }
 
-        // 이메일로 기존 사용자 검색, 없으면 새 사용자 생성
-        log.info("이메일 {} 로 기존 사용자 검색", Optional.ofNullable(user.getAttribute("email")));
-        User member = userRepository.findByEmail(user.getAttribute("email"))
-                .map(existingUser -> {
-                    log.info("이미 존재하는 이메일입니다: {}", existingUser.getEmail());
-                    return existingUser;
-                })
-                .orElseGet(() -> {
-                    log.info("기존 사용자가 없으므로 새 사용자 생성");
-                    return createNewMember(user);
-                });
+        String email = user.getAttribute("email");
 
-        // AuthenticationToken 생성 및 인증 처리
-//        log.info("구글 인증 처리 시작");
-//        OAuth2AuthenticationToken authenticationToken = new OAuth2AuthenticationToken(
-//                user, Collections.singleton(new SimpleGrantedAuthority("USER")), "email"
-//        );
+        // 이메일 중복 확인
+        if (userRepository.existsByEmail(email)) {
+            log.info("이미 존재하는 이메일입니다: {}", email);
+            // 이메일 중복일 경우 400 Bad Request와 함께 메시지 반환
+            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+        }
 
-        // 인증 처리
-//        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        // 새 사용자 생성
+        log.info("이메일 {} 로 새로운 사용자 생성", email);
+        User member = createNewMember(user);
 
         // JWT 토큰 생성
         log.info("JWT 토큰 생성 완료");
@@ -115,12 +107,12 @@ public class GoogleService {
         String userId = usernamePart + domainPart;
 
         member.setEmail(email);
-        member.setUserId(userId); // Set userId as combination of username and domain part
-        member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));
-        member.setPassword(passwordEncoder.encode(userId + "!!")); // userId + "!!"로 비밀번호 생성
+        member.setUserId(userId);  // 이메일 기반 사용자 ID 생성
+        member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));  // 랜덤 닉네임 생성
+        member.setPassword(passwordEncoder.encode(userId + "!!"));  // 기본 비밀번호 생성
         member.setUserStatus(UserStatus.USER);
 
         log.info("새 사용자 정보 저장: 사용자 ID = {}, 이메일 = {}", userId, email);
-        return userRepository.save(member);
+        return userRepository.save(member);  // 새 사용자 DB에 저장
     }
 }
