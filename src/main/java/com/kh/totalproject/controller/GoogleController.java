@@ -23,7 +23,7 @@ public class GoogleController {
     private final GoogleService googleService;  // GoogleService 의존성 주입
 
     // 구글 로그인 처리 (DTO 사용)
-    @PostMapping("/google")
+    @PostMapping("/google/login")
     public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest googleLoginRequest) {
         String googleToken = googleLoginRequest.getToken();  // DTO에서 구글 토큰 추출
         if (googleToken == null || googleToken.isEmpty()) {
@@ -36,6 +36,7 @@ public class GoogleController {
             result.put("grantType", "Bearer");
             result.put("accessToken", tokenResponse.getAccessToken());
             result.put("refreshToken", tokenResponse.getRefreshToken());
+            result.put("isNewUser", String.valueOf(tokenResponse.isNewUser())); // isNewUser 값 추가
             return ResponseEntity.ok(result);  // 성공적인 응답 반환
         } catch (Exception e) {
             log.error("구글 로그인 처리 중 오류 발생: {}", e.getMessage());

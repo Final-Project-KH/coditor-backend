@@ -1,4 +1,3 @@
-/* 로그인시 필요한 Token 데이터 전송 Dto */
 package com.kh.totalproject.dto.response;
 
 import lombok.*;
@@ -8,8 +7,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class TokenResponse {
-    private String grantType;   // Bearer
+    private String grantType;
     private String accessToken; // Access Token
     private String refreshToken; // Refresh Token
+    private boolean isNewUser;  // 신규 사용자 여부 추가
+
 }
