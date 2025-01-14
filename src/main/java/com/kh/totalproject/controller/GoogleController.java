@@ -31,7 +31,7 @@ public class GoogleController {
         }
 
         try {
-            TokenResponse tokenResponse = googleService.loginWithGoogle(googleToken);  // 구글 로그인 처리
+            TokenResponse tokenResponse = googleService.login(googleToken);  // 구글 로그인 처리
             Map<String, String> result = new HashMap<>();
             result.put("grantType", "Bearer");
             result.put("accessToken", tokenResponse.getAccessToken());
