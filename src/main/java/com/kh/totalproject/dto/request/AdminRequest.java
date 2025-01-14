@@ -1,6 +1,7 @@
 package com.kh.totalproject.dto.request;
 
 
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,19 +13,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveUserRequest { // 일반 User 회원가입 Request Dto
+public class AdminRequest { // 관리자 회원가입 Request Dto
     private String userId;
     private String email;
     private String password;
     private String nickname;
-
-    // User 저장 시 password 는 암호화하여 데이터베이스 저장
+    private Role role; // Admin 회원가입은 userStatus 추가
+    // userStatus 값이 null 만 아니면 자동으로 Admin 권한으로 계정 생성됨
+    
+    // Admin 저장 시 password 는 암호화하여 데이터베이스 저장
     public User toEntity(PasswordEncoder passwordEncoder){
         return User.builder()
                 .userId(userId)
                 .password(passwordEncoder.encode(password))
                 .email(email)
                 .nickname(nickname)
+                .role(role)
                 .build();
     }
 }

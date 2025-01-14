@@ -1,7 +1,7 @@
+/* 회원가입, 아이디, 비밀번호 찾기시 필요한 데이터 전송 Dto
+*  otp 추가 되었음 */
 package com.kh.totalproject.dto.request;
 
-
-import com.kh.totalproject.constant.UserStatus;
 import com.kh.totalproject.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,22 +13,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveAdminRequest { // 관리자 회원가입 Request Dto
+public class UserRequest {
+    private Long id;
     private String userId;
     private String email;
     private String password;
     private String nickname;
-    private UserStatus userStatus; // Admin 회원가입은 userStatus 추가 
-    // userStatus 값이 null 만 아니면 자동으로 Admin 권한으로 계정 생성됨
-    
-    // Admin 저장 시 password 는 암호화하여 데이터베이스 저장
+    private String profileUrl;
+    private Integer otp;
+
+    // User 저장 시 password 는 암호화하여 데이터베이스 저장
     public User toEntity(PasswordEncoder passwordEncoder){
         return User.builder()
                 .userId(userId)
                 .password(passwordEncoder.encode(password))
                 .email(email)
                 .nickname(nickname)
-                .userStatus(userStatus)
                 .build();
     }
 }
