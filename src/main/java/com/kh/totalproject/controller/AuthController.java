@@ -92,4 +92,17 @@ public class AuthController {
     public ResponseEntity<Boolean> resetPw(@PathVariable String email, @RequestParam String newPw) {
         return ResponseEntity.ok(authService.resetPassword(email, newPw));
     }
+
+    private final GoogleService googleService;
+    private final KakaoService kakaoService;
+
+    @PostMapping("/google")
+    public TokenResponse googleLogin(@RequestBody String idToken) {
+        return googleService.login(idToken);
+    }
+
+    @PostMapping("/kakao")
+    public TokenResponse kakaoLogin(@RequestBody String accessToken) {
+        return kakaoService.login(accessToken);
+    }
 }
