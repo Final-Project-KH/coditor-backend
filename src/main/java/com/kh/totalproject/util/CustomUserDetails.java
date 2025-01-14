@@ -1,6 +1,7 @@
 package com.kh.totalproject.util;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +27,8 @@ public class CustomUserDetails implements UserDetails {
         this.password = password;
         this.authorities = authorities;
     }
+
+
     @Override
     public String getUsername(){
         return userId;

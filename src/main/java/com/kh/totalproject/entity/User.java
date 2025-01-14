@@ -1,6 +1,6 @@
 package com.kh.totalproject.entity;
 
-import com.kh.totalproject.constant.UserStatus;
+import com.kh.totalproject.constant.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -38,6 +38,9 @@ public class User {
     @Column(nullable = false, length = 50)
     @Size(min = 5, max = 50, message = "이메일은 5자 이상, 50자 이하(영어 기준)")
     private String email;
+
+    @Column(nullable = true, length = 100)
+    private String profileUrl;
     
     // 암호화 하기 때문에 max 값 255로 설정
     @Column(nullable = false)
@@ -45,14 +48,14 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private UserStatus userStatus;
+    private Role role;
 
     @PrePersist
     private void prePersist(){
-        if (userStatus == null){
-            this.userStatus = UserStatus.USER;
+        if (role == null){
+            this.role = Role.USER;
         }
-        else this.userStatus = UserStatus.ADMIN;
+        else this.role = Role.ADMIN;
     }
 
     @CreatedDate
@@ -63,11 +66,11 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder // NoArgsConstructor 가 있어야함
-    public User(String userId, String email, String nickname, String password, UserStatus userStatus){
+    public User(String userId, String email, String nickname, String password, Role role){
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.userStatus = userStatus;
+        this.role = role;
     }
 }

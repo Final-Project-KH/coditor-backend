@@ -30,17 +30,17 @@ public class CustomUserDetailService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException{
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found : " + userId));
 
         return new CustomUserDetails(
-                user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getUserId(),
                 user.getId(),
-                user.getPassword(),
-                Collections.singleton(new SimpleGrantedAuthority(user.getUserStatus().toString())  )
+                user.getPassword(), // 비밀번호 포함
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );
     }
 }

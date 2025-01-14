@@ -49,6 +49,11 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-oauth2-jose:5.5.0'
 	implementation 'org.springframework.security:spring-security-oauth2-core:5.5.0'
 
+	implementation 'io.github.cdimascio:dotenv-java:3.0.0'    // Spring Boot는 기본적으로 ..env 파일을 로드하기 위함
+
+	// 이메일 인증
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 
 }
 

@@ -1,7 +1,6 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.constant.UserStatus;
-import com.kh.totalproject.dto.response.GoogleUserInfoResponse;
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
@@ -11,12 +10,8 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -24,21 +19,19 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
-public class GoogleService {
+public class GoogleService implements OAuth2Service {
 
-    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public TokenResponse loginWithGoogle(String idToken) {
+    public TokenResponse login(String idToken) {
         if (idToken == null || idToken.isEmpty()) {
             log.error("구글 ID 토큰이 유효하지 않습니다.");
             throw new IllegalArgumentException("구글 ID 토큰이 유효하지 않습니다.");
@@ -54,24 +47,36 @@ public class GoogleService {
         }
 
         String email = user.getAttribute("email");
+        User member;
+        boolean isNewUser = false;
 
         // 이메일 중복 확인
         if (userRepository.existsByEmail(email)) {
             log.info("이미 존재하는 이메일입니다: {}", email);
-            // 이메일 중복일 경우 400 Bad Request와 함께 메시지 반환
-            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+            // 이메일 중복일 경우, 이미 존재하는 사용자 정보를 가져와서 member에 대입
+            member = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("이미 가입된 이메일입니다."));
+            log.info("기존 사용자 정보 가져오기 완료: 사용자 ID = {}", member.getUserId());
+        } else {
+            // 새 사용자 생성
+            log.info("이메일 {} 로 새로운 사용자 생성", email);
+            member = createNewMember(user);
+            isNewUser = true; // 신규 사용자라면 isNewUser를 true로 설정
         }
-
-        // 새 사용자 생성
-        log.info("이메일 {} 로 새로운 사용자 생성", email);
-        User member = createNewMember(user);
 
         // JWT 토큰 생성
         log.info("JWT 토큰 생성 완료");
-        return jwtUtil.generateTokenFromUser(member);
+
+        // 응답에 isNewUser 값 추가
+        TokenResponse tokenResponse = jwtUtil.generateTokenFromUser(member);
+        tokenResponse.setNewUser(isNewUser); // 신규 사용자 여부 추가
+
+        //log.info("TokenResponse: {}", tokenResponse);
+        return tokenResponse;
     }
 
-    private OAuth2User validateAndExtractUserInfo(String idToken) {
+
+    public OAuth2User validateAndExtractUserInfo(String idToken) {
         try {
             // ID Token을 파싱하여 클레임 추출
             log.info("구글 ID 토큰 파싱 시작");
@@ -110,7 +115,7 @@ public class GoogleService {
         member.setUserId(userId);  // 이메일 기반 사용자 ID 생성
         member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));  // 랜덤 닉네임 생성
         member.setPassword(passwordEncoder.encode(userId + "!!"));  // 기본 비밀번호 생성
-        member.setUserStatus(UserStatus.USER);
+//        member.setUserStatus(UserStatus.USER);
 
         log.info("새 사용자 정보 저장: 사용자 ID = {}, 이메일 = {}", userId, email);
         return userRepository.save(member);  // 새 사용자 DB에 저장
