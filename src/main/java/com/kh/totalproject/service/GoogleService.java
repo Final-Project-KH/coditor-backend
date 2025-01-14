@@ -1,6 +1,6 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.constant.UserStatus;
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
