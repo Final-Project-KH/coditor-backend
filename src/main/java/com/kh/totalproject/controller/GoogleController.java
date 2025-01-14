@@ -2,10 +2,10 @@ package com.kh.totalproject.controller;
 
 import com.kh.totalproject.dto.request.GoogleLoginRequest;
 import com.kh.totalproject.dto.request.LoginRequest;
-import com.kh.totalproject.dto.request.SaveAdminRequest;
-import com.kh.totalproject.dto.request.SaveUserRequest;
+import com.kh.totalproject.dto.request.AdminRequest;
+import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
-import com.kh.totalproject.dto.response.UserInfoResponse;
+import com.kh.totalproject.dto.response.UserResponse;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
 import com.kh.totalproject.service.UserService;
