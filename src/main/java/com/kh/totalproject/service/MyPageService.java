@@ -1,88 +1,84 @@
 package com.kh.totalproject.service;
 
-
 import com.kh.totalproject.dto.request.UserRequest;
+import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.dto.response.UserResponse;
+import com.kh.totalproject.entity.Board;
 import com.kh.totalproject.entity.User;
+import com.kh.totalproject.repository.BoardRepository;
 import com.kh.totalproject.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.kh.totalproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-@Transactional
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
-public class UserService {
+@Transactional
+public class MyPageService {
     private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    // 회원정보 수정 (비밀번호 변경 시에 데이터베이스에 암호화되어서 들어가는지 확인 필요)
-    public UserResponse update(Long id, UserRequest requestDto) {
-        User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-        if (requestDto.getPassword() != null) { // 이 부분 기존 비밀번호와 일치하지 않으면으로 변경? (암호화 방식 비교)
-            user.setPassword(requestDto.getPassword());
+    // 내 정보 보기
+    public UserResponse listMyProfile(String authorizationHeader) {
+        String token = authorizationHeader.replace("Bearer ", ""); // Bearer 제거
+        log.info("Bearer 제거한 토큰 : {} ", token);
+        jwtUtil.getAuthentication(token); // 인증 정보 생성
+        log.info("인증정보 생성 : {} ", jwtUtil.getAuthentication(token));
+        Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
+        log.info("토큰에서 ID 추출 : {}", id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        return UserResponse.ofAll(user);
+    }
+
+    // 내 정보 수정
+    public boolean modifyMember(UserRequest userRequest) {
+        try {
+            User user = userRepository.findById(userRequest.getId())
+                    .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+            user.setNickname(userRequest.getNickname());
+            user.setProfileUrl(userRequest.getProfileUrl());
+            userRepository.save(user);
+            return true;
+        } catch (Exception e) {
+            log.error("회원 정보 수정 실패 하였습니다 : {}", e.getMessage());
+            return false;
         }
-
-        user.setEmail(requestDto.getEmail());
-        user.setNickname(requestDto.getNickname());
-
-        // Flush 작업 수행 : 영속성 컨텍스트에 쌓인 변경 내용을 데이터베이스에 반영(시간 정보가 업데이트 되도록 SQL 즉시 실행, COMMIT은 수행되지 않음)
-        // COMMIT은 메서드 종료 시 수행됨
-        userRepository.saveAndFlush(user);
-        return convertToUserInfoResponse(user);
-    }
-    
-    // 회원정보 삭제 (삭제하시겠습니까? (삭제 전에 필요))
-    public UserResponse delete(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-        userRepository.delete(user);
-        return convertToUserInfoResponse(user);
     }
 
-    // 전체 유저 정보 가져오기 (Admin 권한으로 변경하거나 삭제 필요)
-    public List<UserResponse> getUserInfoAll() {
-        return userRepository.findAll().stream()
-                .map(this::convertToUserInfoResponse)
+    // 내 비밀번호 변경
+    public boolean changePw(Long id, String inputPw, String newPw) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        if (!passwordEncoder.matches(inputPw, user.getPassword())) {
+            log.error("입력된 비밀번호 '{}'와 기존 비밀번호 '{}'가 일치하지 않습니다.", inputPw, user.getPassword());
+            return false;
+        } else {
+            String newHashedPw = passwordEncoder.encode(newPw);
+            user.setPassword(newHashedPw);
+            userRepository.save(user);
+            return true;
+        }
+    }
+
+    // 내 작성글 보기
+    public List<BoardResponse> myPostList(int size) {
+        Pageable pageable = PageRequest.ofSize(size);
+        List<Board> boards = boardRepository.findAll(pageable).getContent();
+
+        return boards.stream()
+                .map(BoardResponse::ofMyPost)
                 .collect(Collectors.toList());
-    }
-    
-    // 단일 유저 정보 가져오기
-    public UserResponse getUserInfo(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("해당 회원을 찾을 수 없습니다. 회원 식별자 id 값 : " + id));
-        return convertToUserNicknameEmailResponse(user);
-    }
-
-
-    private UserResponse convertToUserInfoResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .role(user.getRole())
-                .registeredAt(user.getRegisteredAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-    }
-
-    private UserResponse convertToUserNicknameEmailResponse(User user) {
-        return UserResponse.builder()
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .build();
-    }
-
-    private User convertDtoToEntity(UserRequest requestDto) {
-        User user = new User();
-        user.setUserId(requestDto.getUserId());
-        user.setEmail(requestDto.getEmail());
-        user.setNickname(requestDto.getNickname());
-        user.setPassword(requestDto.getPassword());
-        return user;
     }
 }

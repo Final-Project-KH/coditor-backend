@@ -49,6 +49,9 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-oauth2-jose:5.5.0'
 	implementation 'org.springframework.security:spring-security-oauth2-core:5.5.0'
 
+	// 이메일 인증
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 
 }
 

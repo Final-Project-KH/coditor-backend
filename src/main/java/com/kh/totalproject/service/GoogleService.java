@@ -1,7 +1,6 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.constant.UserStatus;
-import com.kh.totalproject.dto.response.GoogleUserInfoResponse;
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
@@ -12,11 +11,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -24,7 +20,6 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -110,7 +105,7 @@ public class GoogleService {
         member.setUserId(userId);  // 이메일 기반 사용자 ID 생성
         member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));  // 랜덤 닉네임 생성
         member.setPassword(passwordEncoder.encode(userId + "!!"));  // 기본 비밀번호 생성
-        member.setUserStatus(UserStatus.USER);
+        member.setRole(Role.USER);
 
         log.info("새 사용자 정보 저장: 사용자 ID = {}, 이메일 = {}", userId, email);
         return userRepository.save(member);  // 새 사용자 DB에 저장

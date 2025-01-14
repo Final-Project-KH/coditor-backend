@@ -1,4 +1,19 @@
 package com.kh.totalproject.repository;
 
-public interface EmailValidationForJoinRepository {
+import com.kh.totalproject.entity.OtpVerificationForJoin;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.Date;
+import java.util.Optional;
+
+public interface EmailValidationForJoinRepository extends JpaRepository<OtpVerificationForJoin, Long> {
+    Optional<OtpVerificationForJoin> findByOtpAndEmail(Integer otp, String email);
+    void deleteByEmail(String email);
+    // 만료된 OTP 삭제
+    @Modifying
+    @Query("DELETE FROM OtpVerificationForJoin ovj WHERE ovj.expirationDate < :currentTime")
+    void deleteExpiredOtp(@Param("currentTime") Date currentTime);
 }

@@ -3,6 +3,7 @@ package com.kh.totalproject.util;
 
 import com.kh.totalproject.config.JwtConfig;
 import com.kh.totalproject.dto.response.TokenResponse;
+import com.kh.totalproject.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -14,14 +15,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -30,10 +28,12 @@ public class JwtUtil {
 
     private final String secretKey;
     private static final long EXPIRATION_TIME = 1000*60*60;
+    private final UserRepository userRepository;
 
     // Secret key 받아오기
-    public JwtUtil(JwtConfig jwtConfig){
+    public JwtUtil(JwtConfig jwtConfig, UserRepository userRepository){
         this.secretKey= jwtConfig.getSecretKey();
+        this.userRepository = userRepository;
     }
 
     // JWT 생성
@@ -93,7 +93,7 @@ public class JwtUtil {
                 user.getNickname(),
                 user.getId(),
                 user.getPassword(),
-                Collections.singleton(new SimpleGrantedAuthority(user.getUserStatus().toString()))
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );
         return generateTokenFromUserDetails(userDetails);
     }
@@ -128,23 +128,33 @@ public class JwtUtil {
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
-                .accessTokenExpiresIn(accessTokenExpiresIn.getTime())
                 .refreshToken(refreshToken)
-                .refreshTokenExpiresIn(refreshTokenExpiresIn.getTime())
                 .build();
     }
 
     public Authentication getAuthentication(String token){
         Claims claims = parseToken(token);
 
+        String primaryKey = claims.getSubject();
+        com.kh.totalproject.entity.User user = userRepository.findById(Long.valueOf(primaryKey))
+                .orElseThrow(()-> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
         Collection<? extends GrantedAuthority> authorities=
                 Arrays.stream(claims.get("authorities").toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .toList();
 
-        // UserID 대신 UserKey 넣어서 생성
-        User principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        // Access Token 만료시 인증 객체 커스텀 필드
+        // 로그인때와 마찬가지로 유저 정보를 확인후 검증
+        CustomUserDetails userDetails = new CustomUserDetails(
+                user.getEmail(),
+                user.getNickname(),
+                user.getUserId(), // primaryKey
+                user.getId(),
+                user.getPassword(),
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
+        );
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
 
     public Claims parseToken(String token){
@@ -154,6 +164,18 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    // Access 토큰이 들어 왔을때 id만 따로 추출
+    public Long extractUserId(String token) {
+        Claims claims = parseToken(token);
+        String id = claims.getSubject();
+        return Long.valueOf(id);
+    }
+
+    // access 토큰 재발급
+    public String generateAccessToken(Authentication authentication) {
+        return generateToken(authentication).getAccessToken();
     }
 
     public boolean validateToken(String token){
