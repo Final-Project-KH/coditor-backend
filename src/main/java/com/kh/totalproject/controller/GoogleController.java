@@ -8,7 +8,6 @@ import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
-import com.kh.totalproject.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
