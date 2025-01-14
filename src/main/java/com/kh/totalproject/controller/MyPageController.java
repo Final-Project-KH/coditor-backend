@@ -1,11 +1,11 @@
+/* 회원정보 수정, 탈퇴 및 내 작성글, 댓글, 요청 전달 받는 컨트롤러
+*  관리자 전용 페이지는 따로 컨트롤러 분리 할 예정 */
 package com.kh.totalproject.controller;
 
 
-import com.kh.totalproject.dto.request.SaveAdminRequest;
-import com.kh.totalproject.dto.request.SaveUserRequest;
-import com.kh.totalproject.dto.response.UserInfoResponse;
-import com.kh.totalproject.entity.User;
-import com.kh.totalproject.service.UserService;
+import com.kh.totalproject.dto.request.UserRequest;
+import com.kh.totalproject.dto.response.UserResponse;
+import com.kh.totalproject.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,19 +13,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// 회원 정보 보기 등은 나중에 url 나눠야함 (분리 안해도됨)
-// 로그인 창, 회원가입 창 url 분리 (마이페이지 또한) (회원 가입 -> AuthController 로 이동)
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/my")
 public class UserController {
-    private final UserService userService;
+    private final MyPageService myPageService;
 
     // User 회원정보 보기 (전체)
     @GetMapping
-    public ResponseEntity<List<UserInfoResponse>> handleGetAllUsers() {
-        List<UserInfoResponse> responseDataDtoList = userService.getUserInfoAll();
+    public ResponseEntity<List<UserResponse>> handleGetAllUsers() {
+        List<UserResponse> responseDataDtoList = myPageService.getUserInfoAll();
         return ResponseEntity.ok(responseDataDtoList);
     }
 
@@ -33,8 +31,8 @@ public class UserController {
     // exists 정보는 프론트에서 HEAD로 보내서 ok(200) not found(404) 인지를 확인하여 처리가 가능합니다.
     // HEAD 메서드로 요청하는 경우 백엔드는 GET으로 매핑하여 처리합니다.
     @GetMapping("/{id}")
-    public ResponseEntity<UserInfoResponse> handleGetUserById(@PathVariable("id") Long id) {
-        UserInfoResponse responseDataDto = userService.getUserInfo(id);
+    public ResponseEntity<UserResponse> handleGetUserById(@PathVariable("id") Long id) {
+        UserResponse responseDataDto = myPageService.getUserInfo(id);
         return ResponseEntity.ok(responseDataDto);
     }
     
@@ -44,8 +42,8 @@ public class UserController {
     // 2) Token 만 Header 에 실어서 BackEnd 로 요청 후 BackEnd 에서 Decoding 하여 처리
     // 현재는 1번 방법
     @PutMapping("/{id}")
-    public ResponseEntity<UserInfoResponse> handleUpdateUser(@PathVariable("id") Long id, @RequestBody SaveUserRequest requestDto) {
-        UserInfoResponse responseDataDto = userService.update(id, requestDto);
+    public ResponseEntity<UserResponse> handleUpdateUser(@PathVariable("id") Long id, @RequestBody UserRequest requestDto) {
+        UserResponse responseDataDto = myPageService.update(id, requestDto);
         return ResponseEntity.ok(responseDataDto);
     }
     
@@ -53,7 +51,7 @@ public class UserController {
     // 실제로는 토큰이 인증된 사용자로 제한해야 합니다.
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> handleDeleteUser(@PathVariable("id") Long id) {
-        UserInfoResponse responseDataDto = userService.delete(id);
+        UserResponse responseDataDto = myPageService.delete(id);
         return ResponseEntity.ok(responseDataDto);
     }
 }

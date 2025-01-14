@@ -1,7 +1,7 @@
 package com.kh.totalproject.dto.response;
 
 
-import com.kh.totalproject.constant.UserStatus;
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.entity.User;
 import lombok.*;
 
@@ -17,7 +17,7 @@ public class UserInfoResponse {
     private String userId;
     private String email;
     private String nickname;
-    private UserStatus userStatus;
+    private Role role;
     private LocalDateTime registeredAt;
     private LocalDateTime updatedAt;
 
@@ -27,7 +27,7 @@ public class UserInfoResponse {
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .userStatus(user.getUserStatus())
+                .role(user.getRole())
                 .registeredAt(user.getRegisteredAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
