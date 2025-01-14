@@ -7,6 +7,8 @@ import com.kh.totalproject.dto.request.SaveUserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserInfoResponse;
 import com.kh.totalproject.service.AuthService;
+import com.kh.totalproject.service.GoogleService;
+import com.kh.totalproject.service.KakaoService;
 import com.kh.totalproject.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,5 +45,18 @@ public class AuthController {
     public ResponseEntity<UserInfoResponse> handleSignUpAdmin(@RequestBody SaveAdminRequest requestDto) {
         UserInfoResponse responseDataDto = authService.saveAdmin(requestDto);
         return ResponseEntity.ok(responseDataDto);
+    }
+
+    private final GoogleService googleService;
+    private final KakaoService kakaoService;
+
+    @PostMapping("/google")
+    public TokenResponse googleLogin(@RequestBody String idToken) {
+        return googleService.login(idToken);
+    }
+
+    @PostMapping("/kakao")
+    public TokenResponse kakaoLogin(@RequestBody String accessToken) {
+        return kakaoService.login(accessToken);
     }
 }
