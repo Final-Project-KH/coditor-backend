@@ -115,7 +115,7 @@ public class GoogleService implements OAuth2Service {
         member.setUserId(userId);  // 이메일 기반 사용자 ID 생성
         member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));  // 랜덤 닉네임 생성
         member.setPassword(passwordEncoder.encode(userId + "!!"));  // 기본 비밀번호 생성
-//        member.setUserStatus(UserStatus.USER);
+        member.setRole(Role.USER);  // 역할을 USER로 설정
 
         log.info("새 사용자 정보 저장: 사용자 ID = {}, 이메일 = {}", userId, email);
         return userRepository.save(member);  // 새 사용자 DB에 저장
