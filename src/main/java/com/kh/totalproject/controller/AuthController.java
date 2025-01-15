@@ -59,7 +59,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.signUp(userRequest));
     }
 
-    // 회원가입중 이메일 유효성 검사 요청 및 OTP 응답
+    // 회원가입시 존재여부 유효성 검사
+    @PostMapping("/join/validate")
+    public ResponseEntity<Boolean> validateForInfo(@RequestParam String key, @RequestParam String value) {
+        return ResponseEntity.ok(authService.validationForInfo(key, value));
+    }
+
+    // 회원가입중 이메일 유효성 검사 요청 및 OTP 응답 *재전송시 해당 컨트롤러 재요청*
     @PostMapping("/join/{email}")
     public ResponseEntity<Boolean> sendOtpForJoin(@RequestParam String email) {
         return ResponseEntity.ok(authService.sendOtpForJoin(email));
