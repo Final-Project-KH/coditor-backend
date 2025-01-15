@@ -1,60 +1,80 @@
-/* Unit 테스트는 단위테스트로써 실질적으로 DB에 값이 담기는 것을 확이 하기보다
-*  각 Service 계층의 메서드가 잘 작동하는지 성공 / 실패 여부를 확인 하기 위한 테스트 */
+/* 설계 단계에서 비즈니스 로직이 작동 하는지 확인하는 유닛 테스트 */
 package com.kh.totalproject.unitTest;
 
-import com.kh.totalproject.dto.MailBody;
-import com.kh.totalproject.dto.request.UserRequest;
+import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
-import com.kh.totalproject.service.AuthService;
-import com.kh.totalproject.service.EmailService;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.TestPropertySource;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import java.util.Optional;
 
-// 진행중.......
-@ExtendWith(MockitoExtension.class)
+import static org.junit.jupiter.api.Assertions.*;
+
+@Slf4j
+@TestPropertySource(locations = "classpath:application-test.properties")
+@SpringBootTest
 public class AuthServiceTest {
-
-    @Mock   // 실제 DB 를 추가 하기보다 Mocking DB 를 임시 주입
-    private UserRepository userRepository;
-    @Mock
-    private EmailService emailService;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @InjectMocks    // 실제 테스트 대상
-    private AuthService authService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Test
-    void testJoinUser_Success() {
-        UserRequest userRequest = new UserRequest();
-        userRequest.setUserId("testId");
-        userRequest.setPassword("Test1234@");
-        userRequest.setEmail("testEmail@gmail.com");
-        userRequest.setNickname("테스터1");
-        userRequest.setOtp(123456);
+    @DisplayName("이메일 여부 확인")
+    public void EmailValidation() {
+        String email = "testemail@gmail.com";
+        Optional <User> findUser = userRepository.findByEmail(email);
+        assertTrue(findUser.isPresent(), "존재하는 이메일이 아닙니다.");
+    }
 
-        Mockito.when(userRepository.existsByEmail("testEmail@gmail.com")).thenReturn(false);
-        Mockito.when(passwordEncoder.encode("Test1234@")).thenReturn("asdSN@!kdm@MF@LFI#Osd");
+    @Test
+    @DisplayName("회원가입 테스트")
+    public void joinUserWithAllTest() {
+        // 인스턴스
+        User user = new User();
+        user.setUserId("testId");
+        user.setPassword(passwordEncoder.encode("testPw"));
+        user.setEmail("testemail@gmail.com");
+        user.setNickname("cook");
+        user.setProfileUrl(null);
+        user.setRole(Role.USER);
 
-        doNothing().when(emailService).sendVerificationEmail(any(MailBody.class));
+        User saveUser = userRepository.save(user);
+        
+        boolean isSaved = saveUser.getUserId().equals(user.getUserId());
+        
+        assertTrue(isSaved);
+    }
 
-        AuthService spyService = spy(authService);
-        doReturn(true).when(spyService).validateOtpForJoin(123456, "testEmail@gmail.com");
+    @Test
+    @DisplayName("이메일을 통해 아이디 찾기")
+    public void findIdByEmail() {
+        String inputEmail = "testemail@gmail.com";
+        Optional<User> isExisted = userRepository.findByEmail(inputEmail);
 
-        boolean result = spyService.signUp(userRequest);
+        assertTrue(isExisted.isPresent());
+        assertEquals(inputEmail, isExisted.get().getEmail());
+    }
 
-        assertTrue(result);
-        verify(userRepository).save(any(User.class));
-        verify(emailService).sendVerificationEmail(any(MailBody.class));
+    @Test
+    @DisplayName("비밀번호 재설정")
+    public void resetPw() {
+        String email = "testmail@gmail.com";
+        String newPw = "test1";
+
+        Optional<User> findUserByEmail = userRepository.findByEmail(email);
+        assertTrue(findUserByEmail.isPresent());    // 유저가 존재할시
+        User userToUpdate = findUserByEmail.get();  // 존재하는 유저를 userToUpdate 에 할당
+        userToUpdate.setPassword(passwordEncoder.encode(newPw));    // 새 비밀번호 암호화
+
+
+        User updateUser = userRepository.save(userToUpdate);
+        assertTrue(passwordEncoder.matches(newPw, updateUser.getPassword()), "비밀번호가 일치하지 않습니다.");
     }
 }
