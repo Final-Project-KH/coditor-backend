@@ -77,7 +77,7 @@ public class AuthService {
             return tokenResponse;
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
-        return null;
+        throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
     // Access Token 만료시 토큰 재발행
