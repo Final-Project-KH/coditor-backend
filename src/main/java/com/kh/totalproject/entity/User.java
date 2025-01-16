@@ -55,7 +55,7 @@ public class User {
         if (role == null){
             this.role = Role.USER;
         }
-        else this.role = Role.ADMIN;
+        //else this.role = Role.ADMIN;      // null 이 아닐때도 기본값이 ADMIN이라 주석처리
     }
 
     @CreatedDate

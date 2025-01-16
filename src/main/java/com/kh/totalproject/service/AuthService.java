@@ -77,7 +77,7 @@ public class AuthService {
             return tokenResponse;
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
-        return null;
+        throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
     // Access Token 만료시 토큰 재발행
@@ -142,13 +142,26 @@ public class AuthService {
         return true;
     }
 
+    // 회원가입시 회원 정보를 DB 와 대조하여 존재여부 유효성 검사하는 메서드
+    // 각 해당하는 유효성 검사에서 이미 존재하면 false 를 반환, 즉 유효성 검사 실패값을 프론트에서 false 로 처리
+    public Boolean validationForInfo(String key, String value) {
+        return switch (key) {
+            case "userId" -> !userRepository.existsByUserId(value);
+            case "email" -> !userRepository.existsByEmail(value);
+            case "nickname" -> !userRepository.existsByNickname(value);
+            default -> throw new IllegalArgumentException("존재하는 key 값이 없습니다.");
+        };
+    }
+
     private void deleteOtpForJoin(String email) {
         emailValidationForJoinRepository.deleteByEmail(email);
     }
 
     // 회원 가입중 기입한 이메일로 OTP 전달
     public Boolean sendOtpForJoin(String email) {
-        emailValidationForJoinRepository.deleteExpiredOtp(new Date());
+        // 재전송을 대비해, 해당 호출이 들어올때마다 기존의 OTP 를 삭제
+        emailValidationForJoinRepository.deleteByEmail(email);
+//        emailValidationForJoinRepository.deleteExpiredOtp(new Date()); 기존 만료시간 네이밍 쿼리는 위에와 중복되므로 삭제
         int otp = otpGenerator();
         String htmlContent = "<h1>이메일 인증 OTP</h1>"
                 + "<p>이메일 인증시 필요한 OTP 입니다 : </p>"
@@ -170,8 +183,10 @@ public class AuthService {
 
     // 회원가입중 이메일 OTP 인증
     public Boolean validateOtpForJoin(Integer otp, String email) {
+        // OTP 가 유효한지 체크
         OtpVerificationForJoin otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email)
                 .orElseThrow(() -> new RuntimeException("해당하는 이메일에 유효한 OTP 가 아닙니다."));
+        // 해당하는 OTP 가 만료 되었을시에 삭제
         if (otpVerificationForJoin.getExpirationDate().before(Date.from(Instant.now()))) {
             emailValidationForJoinRepository.deleteById(otpVerificationForJoin.getId());
             return false;
