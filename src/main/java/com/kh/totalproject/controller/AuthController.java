@@ -60,7 +60,7 @@ public class AuthController {
     }
 
     // 회원가입중 이메일 유효성 검사 요청 및 OTP 응답
-    @PostMapping("/join/{email}")
+    @PostMapping("/join/verifyemail")
     public ResponseEntity<Boolean> sendOtpForJoin(@RequestParam String email) {
         return ResponseEntity.ok(authService.sendOtpForJoin(email));
     }
