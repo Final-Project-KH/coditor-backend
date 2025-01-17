@@ -11,7 +11,9 @@ import java.util.Optional;
 
 public interface EmailValidationForJoinRepository extends JpaRepository<OtpVerificationForJoin, Long> {
     Optional<OtpVerificationForJoin> findByOtpAndEmail(Integer otp, String email);
-    void deleteByEmail(String email);
+    @Modifying
+    @Query("DELETE FROM OtpVerificationForJoin o WHERE o.email = :email")
+    void deleteByEmail(@Param("email") String email);
     // 만료된 OTP 삭제
     @Modifying
     @Query("DELETE FROM OtpVerificationForJoin ovj WHERE ovj.expirationDate < :currentTime")
