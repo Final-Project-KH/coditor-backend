@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Optional;
 import java.util.Random;
 
 @Slf4j
@@ -113,6 +114,7 @@ public class AuthService {
     // 회원 가입 서비스 계층 비즈니스 로직
     public Boolean signUp(UserRequest userRequest) {
         Integer otp = userRequest.getOtp();
+        log.info(String.valueOf(otp));
         if (!validateOtpForJoin(otp, userRequest.getEmail())) {
             throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
         }
@@ -184,14 +186,20 @@ public class AuthService {
     // 회원가입중 이메일 OTP 인증
     public Boolean validateOtpForJoin(Integer otp, String email) {
         // OTP 가 유효한지 체크
-        OtpVerificationForJoin otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email)
-                .orElseThrow(() -> new RuntimeException("해당하는 이메일에 유효한 OTP 가 아닙니다."));
-        // 해당하는 OTP 가 만료 되었을시에 삭제
-        if (otpVerificationForJoin.getExpirationDate().before(Date.from(Instant.now()))) {
-            emailValidationForJoinRepository.deleteById(otpVerificationForJoin.getId());
+        Optional<OtpVerificationForJoin> otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email);
+
+        if (otpVerificationForJoin.isEmpty()){
             return false;
         }
-        return true;
+        // 해당하는 OTP 가 만료 되었을시에 삭제
+        else{
+            OtpVerificationForJoin otpData = otpVerificationForJoin.get();
+            if (otpData.getExpirationDate().before(Date.from(Instant.now()))) {
+                emailValidationForJoinRepository.deleteById(otpData.getId());
+                return false;
+            }
+            else return true;
+        }
     }
 
     // 이메일을 통한 ID 찾기
