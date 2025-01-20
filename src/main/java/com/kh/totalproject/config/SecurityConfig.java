@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/auth/**",
                                 "/auth/google",
-                                "/auth/join/**"
+                                "/auth/join/**",
+                                "/auth/forgotid/**"
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )

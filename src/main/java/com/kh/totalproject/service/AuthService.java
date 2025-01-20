@@ -206,7 +206,7 @@ public class AuthService {
     public UserResponse getIdByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
-        return UserResponse.ofUserId(user.getEmail());
+        return UserResponse.ofUserId(user);
     }
 
     // 비밀번호 찾기시 이메일 존재 여부 확인
