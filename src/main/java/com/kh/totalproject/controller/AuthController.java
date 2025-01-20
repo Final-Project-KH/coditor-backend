@@ -78,7 +78,7 @@ public class AuthController {
     }
 
     // 아이디 찾기에 필요한 정보를 요청, 응답
-    @GetMapping("/forgotId")
+    @PostMapping("/forgotid")
     public ResponseEntity<UserResponse> findId(@RequestParam String email) {
         return ResponseEntity.ok(authService.getIdByEmail(email));
     }
