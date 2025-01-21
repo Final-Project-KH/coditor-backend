@@ -16,7 +16,6 @@ import com.kh.totalproject.repository.EmailValidationForJoinRepository;
 import com.kh.totalproject.repository.EmailValidationRepository;
 import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
-import com.kh.totalproject.util.CustomUserDetails;
 import com.kh.totalproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +23,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -114,7 +111,6 @@ public class AuthService {
     // 회원 가입 서비스 계층 비즈니스 로직
     public Boolean signUp(UserRequest userRequest) {
         Integer otp = userRequest.getOtp();
-        log.info(String.valueOf(otp));
         if (!validateOtpForJoin(otp, userRequest.getEmail())) {
             throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
         }
@@ -238,7 +234,7 @@ public class AuthService {
     public Boolean validateOtpForPw(Integer otp, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
-        OtpVerification otpVerification = emailValidationRepository.findByOtpAndMember(otp, user)
+        OtpVerification otpVerification = emailValidationRepository.findByOtpAndUser(otp, user)
                 .orElseThrow(() -> new RuntimeException("해당하는 이메일에 적합한 OTP 가 아닙니다."));
         if (otpVerification.getExpirationDate().before(Date.from(Instant.now()))) {
             emailValidationRepository.deleteById(otpVerification.getId());

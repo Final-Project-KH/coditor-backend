@@ -1,17 +1,118 @@
 package com.kh.totalproject.dto.request;
 
+import com.kh.totalproject.constant.*;
+import com.kh.totalproject.entity.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoardRequest {
+    private Long boardId;
+    private String name;
     private String title;
     private String content;
     private String imgUrl;
-    private String name;
+    private Status status;
+    private Solution solution;
+    private Language language;
+    private Course course;
+    private Study study;
+    private Team team;
+
+    public CodingBoard toCreateCodingPost(User user) {
+        return CodingBoard.builder()
+                .title(title)
+                .user(user)
+                .content(content)
+                .imgUrl(imgUrl)
+                .solution(solution)
+                .language(language)
+                .build();
+    }
+
+    public CourseBoard toCreateCoursePost(User user) {
+        return CourseBoard.builder()
+                .title(title)
+                .user(user)
+                .content(content)
+                .imgUrl(imgUrl)
+                .course(course)
+                .build();
+    }
+
+    public StudyBoard toCreateStudyPost(User user) {
+        return StudyBoard.builder()
+                .title(title)
+                .user(user)
+                .content(content)
+                .imgUrl(imgUrl)
+                .status(status)
+                .study(study)
+                .build();
+    }
+
+    public TeamBoard toCreateTeamPost(User user) {
+        return TeamBoard.builder()
+                .title(title)
+                .user(user)
+                .content(content)
+                .imgUrl(imgUrl)
+                .status(status)
+                .team(team)
+                .build();
+    }
+
+    public CodingBoard toModifyCodingPost(User user, CodingBoard existingData) {
+        return CodingBoard.builder()
+                .boardId(existingData.getId())
+                .title(title != null ? title : existingData.getTitle())
+                .user(user)
+                .content(content != null ? title : existingData.getContent())
+                .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
+                .solution(solution != null ? solution : existingData.getSolution())
+                .language(language != null ? language : existingData.getLanguage())
+                .build();
+    }
+
+    public CourseBoard toModifyCoursePost(User user, CourseBoard existingData) {
+        return CourseBoard.builder()
+                .boardId(existingData.getId())
+                .title(title != null ? title : existingData.getTitle())
+                .user(user)
+                .content(content != null ? content : existingData.getContent())
+                .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
+                .course(course != null ? course : existingData.getCourse())
+                .build();
+    }
+
+    public StudyBoard toModifyStudyPost(User user, StudyBoard existingData) {
+        return StudyBoard.builder()
+                .boardId(existingData.getId())
+                .title(title != null ? title : existingData.getTitle())
+                .user(user)
+                .content(content != null ? content : existingData.getContent())
+                .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
+                .status(status != null ? status : existingData.getStatus())
+                .study(study != null ? study : existingData.getStudy())
+                .build();
+    }
+
+    public TeamBoard toModifyTeamPost(User user, TeamBoard existingData) {
+        return TeamBoard.builder()
+                .boardId(existingData.getId())
+                .title(title != null ? title : existingData.getTitle())
+                .user(user)
+                .content(content != null ? content : existingData.getContent())
+                .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
+                .status(status != null ? status : existingData.getStatus())
+                .team(team != null ? team : existingData.getTeam())
+                .build();
+    }
 }
