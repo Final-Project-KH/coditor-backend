@@ -16,7 +16,6 @@ import com.kh.totalproject.repository.EmailValidationForJoinRepository;
 import com.kh.totalproject.repository.EmailValidationRepository;
 import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
-import com.kh.totalproject.util.CustomUserDetails;
 import com.kh.totalproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +23,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
+import java.util.Optional;
 import java.util.Random;
 
 @Slf4j
@@ -184,22 +182,27 @@ public class AuthService {
     // 회원가입중 이메일 OTP 인증
     public Boolean validateOtpForJoin(Integer otp, String email) {
         // OTP 가 유효한지 체크
+        Optional<OtpVerificationForJoin> otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email);
 
-        OtpVerificationForJoin otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email)
-                .orElseThrow(() -> new RuntimeException("해당하는 이메일에 유효한 OTP 가 아닙니다."));
-        // 해당하는 OTP 가 만료 되었을시에 삭제
-        if (otpVerificationForJoin.getExpirationDate().before(Date.from(Instant.now()))) {
-            emailValidationForJoinRepository.deleteById(otpVerificationForJoin.getId());
+        if (otpVerificationForJoin.isEmpty()){
             return false;
         }
-        return true;
+        // 해당하는 OTP 가 만료 되었을시에 삭제
+        else{
+            OtpVerificationForJoin otpData = otpVerificationForJoin.get();
+            if (otpData.getExpirationDate().before(Date.from(Instant.now()))) {
+                emailValidationForJoinRepository.deleteById(otpData.getId());
+                return false;
+            }
+            else return true;
+        }
     }
 
     // 이메일을 통한 ID 찾기
     public UserResponse getIdByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
-        return UserResponse.ofUserId(user.getEmail());
+        return UserResponse.ofUserId(user);
     }
 
     // 비밀번호 찾기시 이메일 존재 여부 확인
