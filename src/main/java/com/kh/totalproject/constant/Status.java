@@ -1,4 +1,4 @@
-/* 커뮤니티 게시글 상태 (진행중 / 종료됨) */
+/* 커뮤니티 스터디, 프로젝트 게시글 상태 (모집중 / 모집완료) */
 package com.kh.totalproject.constant;
 
 public enum Status {

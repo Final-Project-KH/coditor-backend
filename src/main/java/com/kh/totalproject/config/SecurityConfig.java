@@ -52,7 +52,10 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/auth/google",
                                 "/auth/join/**",
-                                "/auth/forgotid/**"
+                                "/auth/forgotid/**",
+                                "/auth/google",
+                                "/community/list/all",
+                                "/community/list/one"
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
