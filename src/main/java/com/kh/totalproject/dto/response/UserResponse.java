@@ -37,9 +37,10 @@ public class UserResponse {
     }
 
     // 이메일을 통한 ID 찾기시 읽기전용 OfUserId
-    public static UserResponse ofUserId(String email) {
+    public static UserResponse ofUserId(User user) {
         return UserResponse.builder()
-                .email(email)
+                .userId(user.getUserId())
+                .email(user.getEmail())
                 .build();
     }
 }

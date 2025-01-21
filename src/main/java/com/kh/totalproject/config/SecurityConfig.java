@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/auth/**",
                                 "/auth/google",
+                                "/auth/join/**",
+                                "/auth/forgotid/**",
+                                "/auth/google",
                                 "/community/list/all",
                                 "/community/list/one"
                         ).permitAll()
