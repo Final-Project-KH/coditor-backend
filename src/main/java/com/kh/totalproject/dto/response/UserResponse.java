@@ -40,6 +40,7 @@ public class UserResponse {
     public static UserResponse ofUserId(User user) {
         return UserResponse.builder()
                 .userId(user.getUserId())
+                .registeredAt(user.getRegisteredAt())
                 .email(user.getEmail())
                 .build();
     }

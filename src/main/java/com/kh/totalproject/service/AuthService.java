@@ -214,7 +214,7 @@ public class AuthService {
         // 새 OTP 생성시 기존의 OTP 삭제
         emailValidationRepository.deleteExpiredOtp(new Date());
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new RuntimeException("등록된 이메일이 존재하지 않습니다."));
         int otp = otpGenerator();
         String htmlContent = "<h1>비밀번호 찾기 OTP</h1>"
                 + "<p>비밀번호 찾기 시 필요한 OTP 입니다 : </p>"
