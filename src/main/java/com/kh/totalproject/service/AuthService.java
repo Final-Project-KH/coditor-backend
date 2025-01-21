@@ -184,6 +184,7 @@ public class AuthService {
     // 회원가입중 이메일 OTP 인증
     public Boolean validateOtpForJoin(Integer otp, String email) {
         // OTP 가 유효한지 체크
+
         OtpVerificationForJoin otpVerificationForJoin = emailValidationForJoinRepository.findByOtpAndEmail(otp, email)
                 .orElseThrow(() -> new RuntimeException("해당하는 이메일에 유효한 OTP 가 아닙니다."));
         // 해당하는 OTP 가 만료 되었을시에 삭제
@@ -230,7 +231,7 @@ public class AuthService {
     public Boolean validateOtpForPw(Integer otp, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
-        OtpVerification otpVerification = emailValidationRepository.findByOtpAndMember(otp, user)
+        OtpVerification otpVerification = emailValidationRepository.findByOtpAndUser(otp, user)
                 .orElseThrow(() -> new RuntimeException("해당하는 이메일에 적합한 OTP 가 아닙니다."));
         if (otpVerification.getExpirationDate().before(Date.from(Instant.now()))) {
             emailValidationRepository.deleteById(otpVerification.getId());
