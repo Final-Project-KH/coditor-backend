@@ -30,8 +30,8 @@ public class MyPageController {
 
     // 내 정보 수정, 아마 버튼 클릭시 조회에서 바로 수정 입력칸 받을 수 있게
     @PutMapping("/profile-modify")
-    public ResponseEntity<Boolean> modifyMember(@RequestBody UserRequest userRequest) {
-        return ResponseEntity.ok(myPageService.modifyMember(userRequest));
+    public ResponseEntity<Boolean> modifyUserInfo(@RequestBody UserRequest userRequest) {
+        return ResponseEntity.ok(myPageService.modifyMyInfo(userRequest));
     }
 
     // 내 정보에서 비밀번호 수정
@@ -41,8 +41,8 @@ public class MyPageController {
     }
 
     // 내 정보에서 내 글 보기
-    @GetMapping("/post/page")
-    public ResponseEntity<List<BoardResponse>> listMyPosts(@RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(myPageService.myPostList(size));
-    }
+//    @GetMapping("/post/page")
+//    public ResponseEntity<List<BoardResponse>> listMyPosts(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size) {
+//        return ResponseEntity.ok(myPageService.myPostList(size, page));
+//    }
 }

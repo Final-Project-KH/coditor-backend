@@ -9,6 +9,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 // 실제 이름 포함?
 // 프로필 이미지 추가?
@@ -55,8 +57,19 @@ public class User {
         if (role == null){
             this.role = Role.USER;
         }
-        //else this.role = Role.ADMIN;      // null 이 아닐때도 기본값이 ADMIN이라 주석처리
+        //else this.role = Role.ADMIN;      // null 이 아닐때도 기본값이 ADMIN 이라 주석처리
     }
+
+    // 게시판 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Board> boards = new ArrayList<>();
+
+    // 댓글 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BoardReaction> boardReactions = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

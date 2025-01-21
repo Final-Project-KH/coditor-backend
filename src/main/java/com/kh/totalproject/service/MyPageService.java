@@ -1,23 +1,16 @@
 package com.kh.totalproject.service;
 
 import com.kh.totalproject.dto.request.UserRequest;
-import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.dto.response.UserResponse;
-import com.kh.totalproject.entity.Board;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.BoardRepository;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,7 +18,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class MyPageService {
     private final UserRepository userRepository;
-    private final BoardRepository boardRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -43,7 +35,7 @@ public class MyPageService {
     }
 
     // 내 정보 수정
-    public boolean modifyMember(UserRequest userRequest) {
+    public boolean modifyMyInfo(UserRequest userRequest) {
         try {
             User user = userRepository.findById(userRequest.getId())
                     .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
@@ -72,13 +64,15 @@ public class MyPageService {
         }
     }
 
-    // 내 작성글 보기
-    public List<BoardResponse> myPostList(int size) {
-        Pageable pageable = PageRequest.ofSize(size);
-        List<Board> boards = boardRepository.findAll(pageable).getContent();
-
-        return boards.stream()
-                .map(BoardResponse::ofMyPost)
-                .collect(Collectors.toList());
-    }
+    // 내 작성글 보기,
+    // 현재 로직에서 내 글을 가져오는 것이 아닌 모든 페이지의 글이 나오기때문에 추후에 수정이 필요함....
+    // 참조값은 Access Token 에서 해당 유저의 id 값을 추출해 해당 유저의 글을 찾는 커스텀 쿼리 필요..
+//    public List<BoardResponse> myPostList(int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size);
+//        List<MainBoard> mainBoards = communityRepository.findAll(pageable).getContent();
+//
+//        return mainBoards.stream()
+//                .map(BoardResponse::ofMyPost)
+//                .collect(Collectors.toList());
+//    }
 }
