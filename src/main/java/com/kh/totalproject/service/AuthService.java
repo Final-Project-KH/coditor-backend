@@ -244,6 +244,12 @@ public class AuthService {
         return true;
     }
 
+    public Boolean availableNewPassword(String email, String newPw) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+        return !passwordEncoder.matches(newPw, user.getPassword());
+    }
+
     // 비밀번호 찾기 OTP 인증후에 비밀번호 변경
     public Boolean resetPassword(String email, String newPw) {
         User user = userRepository.findByEmail(email)
