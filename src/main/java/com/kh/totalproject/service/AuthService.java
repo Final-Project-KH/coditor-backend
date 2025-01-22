@@ -51,27 +51,20 @@ public class AuthService {
     public TokenResponse logIn(LoginRequest loginRequest) {
         User user = userRepository.findByUserId(loginRequest.getUserId())
                 .orElseThrow(() -> new RuntimeException("존재하는 계정이 아닙니다."));
-        log.info("유저 확인 : {}", user);
         // 만약 기존에 토큰이 있을시에 DB 에서 Refresh 토큰 삭제
-        tokenRepository.deleteByUser(user);
-        log.info("토큰 삭제 여부 ");
+        tokenRepository.deleteByUserKey(user.getUserKey());
         // 토큰을 제작, 발급을 해주는 로직
         if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
             // 로그인 입력 받은 아이디, 패스워드 기반 Spring Security Token 생성
             UsernamePasswordAuthenticationToken authenticationToken = loginRequest.toAuthentication();
-            log.info("토큰 생성1 : {}", authenticationToken);
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-            log.info("유효성 검사 : {}", authenticationToken);
-            log.info("유효성 검사 : {}", authentication);
             TokenResponse tokenResponse = jwtUtil.generateToken(authentication);
-            log.info("토큰 생성2 : {}", tokenResponse);
             // Refresh Token 을 DB 에 저장
             Token token = Token.builder()
                     .refreshToken(tokenResponse.getRefreshToken())
                     .build();
             token.setUser(user);
             tokenRepository.save(token);
-            log.info("토큰 저장 : {}", token);
             return tokenResponse;
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
@@ -92,7 +85,7 @@ public class AuthService {
         log.info("토큰을 유저에서 받음 : {}", user);
         // 사용자가 매개변수로 들어온 Refresh Token 을 가지고 있는지 유무 체크 / 없으면 기존 Refresh Token 을 DB 에서 삭제
         if (!token.getRefreshToken().equals(refreshToken)) {
-            tokenRepository.deleteByUser(user);
+            tokenRepository.deleteByUserKey(user.getUserKey());
             throw new HiJackingException("유효한 Refresh Token 이 아닙니다 해당 계정의 Refresh Token 삭제.");
         }
 

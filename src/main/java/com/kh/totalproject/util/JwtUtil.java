@@ -107,7 +107,7 @@ public class JwtUtil {
 
         // Access Token 생성
         String accessToken = Jwts.builder()
-                .subject(String.valueOf(userDetails.getId()))
+                .subject(String.valueOf(userDetails.getUserKey()))
                 .claim("nickname", userDetails.getNickname())
                 .claim("authorities", userDetails.getAuthorities())
                 .issuedAt(new Date())
@@ -117,7 +117,7 @@ public class JwtUtil {
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
-                .subject(String.valueOf(userDetails.getId()))
+                .subject(String.valueOf(userDetails.getUserKey()))
                 .claim("nickname", userDetails.getNickname())
                 .claim("authorities", userDetails.getAuthorities())
                 .issuedAt(new Date())
@@ -147,9 +147,9 @@ public class JwtUtil {
         // Access Token 만료시 인증 객체 커스텀 필드
         // 로그인때와 마찬가지로 유저 정보를 확인후 검증
         CustomUserDetails userDetails = new CustomUserDetails(
+                user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getUserId(), // primaryKey
                 user.getUserKey(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))

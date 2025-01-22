@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class UserResponse {
-    private Long id;
+    private Long userKey;
     private String userId;
     private String email;
     private String nickname;
@@ -25,7 +25,7 @@ public class UserResponse {
     // 내정보 보기 읽기전용 OfAll
     public static UserResponse ofAll(User user) {
         return UserResponse.builder()
-                .id(user.getUserKey())
+                .userKey(user.getUserKey())
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
