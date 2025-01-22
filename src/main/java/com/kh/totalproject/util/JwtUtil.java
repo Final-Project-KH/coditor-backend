@@ -91,7 +91,7 @@ public class JwtUtil {
                 user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getId(),
+                user.getUserKey(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );
@@ -150,7 +150,7 @@ public class JwtUtil {
                 user.getEmail(),
                 user.getNickname(),
                 user.getUserId(), // primaryKey
-                user.getId(),
+                user.getUserKey(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );

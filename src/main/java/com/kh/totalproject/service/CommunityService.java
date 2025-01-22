@@ -76,7 +76,7 @@ public class CommunityService {
             Board existingBoard = findByBoardId(boardRequest, type);
 
             // 게시글 작성자가 맞는지 확인
-            if (!existingBoard.getUser().getId().equals(user.getId())) {
+            if (!existingBoard.getUser().getUserKey().equals(user.getUserKey())) {
                 throw new IllegalArgumentException("작성자가 아닙니다.");
             }
 

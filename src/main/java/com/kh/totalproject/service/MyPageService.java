@@ -37,7 +37,7 @@ public class MyPageService {
     // 내 정보 수정
     public boolean modifyMyInfo(UserRequest userRequest) {
         try {
-            User user = userRepository.findById(userRequest.getId())
+            User user = userRepository.findById(userRequest.getUserKey())
                     .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
             user.setNickname(userRequest.getNickname());
             user.setProfileUrl(userRequest.getProfileUrl());
