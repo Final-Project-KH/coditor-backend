@@ -55,8 +55,13 @@ public class SecurityConfig {
                                 "/auth/forgotid/**",
                                 "/auth/google",
                                 "/community/list/all",
+<<<<<<< HEAD
                                 "/community/list/one",
-                                "/community"
+                                "/community/list/comment"
+=======
+                                "/community/list/one"
+//                                "/community/new/post" // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
+>>>>>>> d5921b3ea00d0416e58bfa8a8c9f44b767b79138
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
