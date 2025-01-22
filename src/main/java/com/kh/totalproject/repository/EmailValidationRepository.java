@@ -20,4 +20,9 @@ public interface EmailValidationRepository extends JpaRepository<OtpVerification
     @Modifying
     @Query("DELETE FROM OtpVerification ov WHERE ov.expirationDate < :currentTime")
     void deleteExpiredOtp(@Param("currentTime") Date currentTime);
+
+    // 이메일 기반 OTP 삭제
+    @Modifying
+    @Query("DELETE FROM OtpVerification ov WHERE ov.user.userKey = :userKey")
+    void deleteByUserKey(@Param("userKey") Long userKey);
 }

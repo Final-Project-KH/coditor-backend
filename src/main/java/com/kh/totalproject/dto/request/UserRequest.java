@@ -14,7 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRequest {
-    private Long id;
+    private Long userKey;
     private String userId;
     private String email;
     private String password;

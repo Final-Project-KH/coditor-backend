@@ -208,9 +208,9 @@ public class AuthService {
     // 비밀번호 찾기시 이메일 존재 여부 확인
     public Boolean sendOtpForPasswordReset(String email) {
         // 새 OTP 생성시 기존의 OTP 삭제
-        emailValidationRepository.deleteExpiredOtp(new Date());
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("등록된 이메일이 존재하지 않습니다."));
+        emailValidationRepository.deleteByUserKey(user.getUserKey());
         int otp = otpGenerator();
         String htmlContent = "<h1>비밀번호 찾기 OTP</h1>"
                 + "<p>비밀번호 찾기 시 필요한 OTP 입니다 : </p>"
