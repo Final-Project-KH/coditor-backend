@@ -1,9 +1,9 @@
 package com.kh.totalproject.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.kh.totalproject.entity.Board;
+import com.kh.totalproject.entity.Comment;
+import com.kh.totalproject.entity.User;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -11,10 +11,23 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CommentResponse {
     private String name;
     private Long boardId;
     private Long commentId;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public static CommentResponse ofAllComment(Comment comment) {
+        return CommentResponse.builder()
+                .name(comment.getUser().getNickname())
+                .boardId(comment.getBoard().getId())
+                .commentId(comment.getId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .build();
+    }
 }
