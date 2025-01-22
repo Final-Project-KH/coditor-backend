@@ -84,19 +84,19 @@ public class AuthController {
     }
 
     // 비밀번호 찾기시 이메일 유효성 검사 요청 및 OTP 응답
-    @PostMapping("/forgotPw/{email}")
+    @PostMapping("/forgotpw/{email}")
     public ResponseEntity<Boolean> sendOtpForPwFind(@PathVariable String email) {
         return ResponseEntity.ok(authService.sendOtpForPasswordReset(email));
     }
 
     // 비밀번호 찾기시 전달 받은 OTP 유효성 체크
-    @PostMapping("/forgotPw/{otp}/{email}")
+    @PostMapping("/forgotpw/{otp}/{email}")
     public ResponseEntity<Boolean> otpValidationForPwFind(@PathVariable Integer otp, @PathVariable String email) {
         return ResponseEntity.ok(authService.validateOtpForPw(otp, email));
     }
 
     // 비밀번호 찾기 첫번째 페이지에서 OTP 인증 후 비밀번호 재설정에 필요한 정보를 요청, 응답 컨트롤러
-    @PutMapping("/resetPw/{email}")
+    @PutMapping("/resetpw/{email}")
     public ResponseEntity<Boolean> resetPw(@PathVariable String email, @RequestParam String newPw) {
         return ResponseEntity.ok(authService.resetPassword(email, newPw));
     }
