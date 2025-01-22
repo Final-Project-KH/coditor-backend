@@ -74,7 +74,7 @@ public class BoardRequest {
                 .boardId(existingData.getId())
                 .title(title != null ? title : existingData.getTitle())
                 .user(user)
-                .content(content != null ? title : existingData.getContent())
+                .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .solution(solution != null ? solution : existingData.getSolution())
                 .language(language != null ? language : existingData.getLanguage())

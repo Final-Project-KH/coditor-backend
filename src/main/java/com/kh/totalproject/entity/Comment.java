@@ -1,19 +1,20 @@
 package com.kh.totalproject.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Entity
 @Getter
 @Setter
 @ToString(exclude = {"board", "user"})    // 순환 참조 방지
-@NoArgsConstructor
 @Table(name = "comment")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Comment {
     @Id
     @Column(name = "comment_id")
@@ -31,11 +32,21 @@ public class Comment {
     @Column(length = 1000)
     private String content;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
+    // 새로운 댓글 생성시 작동
     @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
+    public void defaultTime() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    // 댓글 업데이트시 작동
+    @PreUpdate
+    public void updatedTime() {
+        updatedAt = LocalDateTime.now();
     }
 }
