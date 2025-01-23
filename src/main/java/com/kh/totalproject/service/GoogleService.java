@@ -7,6 +7,7 @@ import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ public class GoogleService implements OAuth2Service {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public TokenResponse login(String idToken) {
+    public TokenResponse login(String idToken, HttpServletResponse response) {
         if (idToken == null || idToken.isEmpty()) {
             log.error("구글 ID 토큰이 유효하지 않습니다.");
             throw new IllegalArgumentException("구글 ID 토큰이 유효하지 않습니다.");
@@ -68,7 +69,7 @@ public class GoogleService implements OAuth2Service {
         log.info("JWT 토큰 생성 완료");
 
         // 응답에 isNewUser 값 추가
-        TokenResponse tokenResponse = jwtUtil.generateTokenFromUser(member);
+        TokenResponse tokenResponse = jwtUtil.generateTokenFromUser(member, response);
         tokenResponse.setNewUser(isNewUser); // 신규 사용자 여부 추가
 
         //log.info("TokenResponse: {}", tokenResponse);

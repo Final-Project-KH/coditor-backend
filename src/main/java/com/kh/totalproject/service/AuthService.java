@@ -17,6 +17,7 @@ import com.kh.totalproject.repository.EmailValidationRepository;
 import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,7 +49,7 @@ public class AuthService {
     private final EmailService emailService;
 
     // Login 시 토큰 반환
-    public TokenResponse logIn(LoginRequest loginRequest) {
+    public TokenResponse logIn(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByUserId(loginRequest.getUserId())
                 .orElseThrow(() -> new RuntimeException("존재하는 계정이 아닙니다."));
         // 만약 기존에 토큰이 있을시에 DB 에서 Refresh 토큰 삭제
@@ -58,23 +59,22 @@ public class AuthService {
             // 로그인 입력 받은 아이디, 패스워드 기반 Spring Security Token 생성
             UsernamePasswordAuthenticationToken authenticationToken = loginRequest.toAuthentication();
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-            TokenResponse tokenResponse = jwtUtil.generateToken(authentication);
+            TokenResponse tokenResponse = jwtUtil.generateToken(authentication, response);
             // Refresh Token 을 DB 에 저장
             Token token = Token.builder()
                     .refreshToken(tokenResponse.getRefreshToken())
                     .build();
             token.setUser(user);
             tokenRepository.save(token);
-            return tokenResponse;
+            return TokenResponse.ofAccessToken(tokenResponse);
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
         throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
     // Access Token 만료시 토큰 재발행
-    public TokenResponse reissueToken(TokenRequest tokenRequest) {
+    public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
 
-        String refreshToken = tokenRequest.getRefreshToken();
         log.info("리프레시 토큰 변수 할당 : {}", refreshToken);
 
         // 매개변수로 들어온 Refresh Token 을 DB 에서의 존재 유무 확인
@@ -92,9 +92,11 @@ public class AuthService {
         // RequestTokenDto 에서 추출한 refreshToken 의 유효성 검사
         Authentication authentication = jwtUtil.getAuthentication(refreshToken);
         log.info("리프레시 토큰 유효성 검사 : {}", authentication);
-
-        String accessToken = jwtUtil.generateAccessToken(authentication);
+        TokenResponse tokenResponse = jwtUtil.generateToken(authentication, response);
+        String accessToken = jwtUtil.generateAccessToken(authentication, response);
         log.info("유효성 검사후 엑세스 토큰 생성 : {}", accessToken);
+        token.setRefreshToken(tokenResponse.getRefreshToken());
+        tokenRepository.save(token);
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
