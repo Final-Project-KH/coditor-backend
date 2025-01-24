@@ -407,9 +407,9 @@ public class CommunityService {
 
     public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new EntityNotFoundException("Board not found"));
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("유저가 존재 하지 않습니다."));
 
         Optional<BoardReaction> existingReaction = boardReactionRepository.findByBoardAndUser(board, user);
 
@@ -442,9 +442,9 @@ public class CommunityService {
 
     public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new EntityNotFoundException("Board not found"));
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("유저가 존재하지 않습니다."));
 
         Reaction userReaction = board.getUserReaction(user);
         int likeCnt = board.getLikeCnt();

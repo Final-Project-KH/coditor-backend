@@ -42,7 +42,7 @@ public class AuthController {
     // 엑세스 토큰 만료시 요청, 응답
     @PostMapping("/reissue")
     public ResponseEntity<?> reissueToken(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
-        log.info("받은 refreshToken: {}", refreshToken);
+        log.info("받은 refreshToken: '{}'", refreshToken);
         if (refreshToken == null || refreshToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
         }

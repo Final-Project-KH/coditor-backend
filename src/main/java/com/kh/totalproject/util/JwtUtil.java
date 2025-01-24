@@ -29,8 +29,7 @@ import java.util.*;
 public class JwtUtil {
 
     private final String secretKey;
-//    private static final long EXPIRATION_TIME = 1000*60*60;
-    private static final long EXPIRATION_TIME = 1000*60;
+    private static final long EXPIRATION_TIME = 1000*60*60;
     private final UserRepository userRepository;
 
     // Secret key 받아오기
