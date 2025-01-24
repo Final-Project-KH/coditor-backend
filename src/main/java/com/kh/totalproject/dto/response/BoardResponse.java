@@ -24,14 +24,11 @@ public class BoardResponse {
     private int commentCnt;
     private int likeCnt;
     private int dislikeCnt;
-    private Reaction reactionStat;
-    private Reaction userReaction;
     private Status status;
-    private Solution solution;
-    private Language language;
-    private Course course;
-    private Study study;
-    private Team team;
+    private List<String> language;
+    private List<String> course;
+    private List<String> study;
+    private List<String> team;
 
     // 댓글 목록 추가
     private List<CommentResponse> comments;
@@ -55,7 +52,7 @@ public class BoardResponse {
                 .content(codingBoard.getContent())
                 .createdAt(codingBoard.getCreatedAt())
                 .updatedAt(codingBoard.getUpdatedAt())
-                .solution(codingBoard.getSolution())
+                .status(codingBoard.getStatus())
                 .language(codingBoard.getLanguage())
                 .viewCnt(codingBoard.getViewCnt())
                 .likeCnt(likeCnt)
@@ -126,7 +123,7 @@ public class BoardResponse {
                 .imgUrl(codingBoard.getImgUrl())
                 .createdAt(codingBoard.getCreatedAt())
                 .updatedAt(codingBoard.getUpdatedAt())
-                .solution(codingBoard.getSolution())
+                .status(codingBoard.getStatus())
                 .language(codingBoard.getLanguage())
                 .viewCnt(codingBoard.getViewCnt())
                 .likeCnt(likeCnt)
