@@ -2,7 +2,6 @@
 package com.kh.totalproject.unitTest;
 
 import com.kh.totalproject.constant.Role;
-import com.kh.totalproject.constant.Solution;
 import com.kh.totalproject.entity.CodingBoard;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.CodingBoardRepository;

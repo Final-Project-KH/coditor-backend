@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,11 +22,10 @@ public class BoardRequest {
     private String content;
     private String imgUrl;
     private Status status;
-    private Solution solution;
-    private Language language;
-    private Course course;
-    private Study study;
-    private Team team;
+    private List<String> language;
+    private List<String> course;
+    private List<String> study;
+    private List<String> team;
 
     public CodingBoard toCreateCodingPost(User user) {
         return CodingBoard.builder()
@@ -32,7 +33,7 @@ public class BoardRequest {
                 .user(user)
                 .content(content)
                 .imgUrl(imgUrl)
-                .solution(solution)
+                .status(status)
                 .language(language)
                 .build();
     }
@@ -76,7 +77,7 @@ public class BoardRequest {
                 .user(user)
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
-                .solution(solution != null ? solution : existingData.getSolution())
+                .status(status != null ? status : existingData.getStatus())
                 .language(language != null ? language : existingData.getLanguage())
                 .build();
     }

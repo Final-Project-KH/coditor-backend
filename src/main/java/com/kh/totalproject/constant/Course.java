@@ -11,8 +11,7 @@ public enum Course {
     RESUME("자기소개서"),
     BOOTCAMP("부트캠프"),
     PROJECT("프로젝트"),
-    ETC("기타"),
-    NONE("");
+    ETC("기타");
     private final String displayName;
 
     Course(String displayName) {
