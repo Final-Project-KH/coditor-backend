@@ -17,6 +17,7 @@ import com.kh.totalproject.repository.EmailValidationRepository;
 import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,40 +49,32 @@ public class AuthService {
     private final EmailService emailService;
 
     // Login 시 토큰 반환
-    public TokenResponse logIn(LoginRequest loginRequest) {
+    public TokenResponse logIn(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByUserId(loginRequest.getUserId())
                 .orElseThrow(() -> new RuntimeException("존재하는 계정이 아닙니다."));
-        log.info("유저 확인 : {}", user);
         // 만약 기존에 토큰이 있을시에 DB 에서 Refresh 토큰 삭제
-        tokenRepository.deleteByUser(user);
-        log.info("토큰 삭제 여부 ");
+        tokenRepository.deleteByUserKey(user.getUserKey());
         // 토큰을 제작, 발급을 해주는 로직
         if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
             // 로그인 입력 받은 아이디, 패스워드 기반 Spring Security Token 생성
             UsernamePasswordAuthenticationToken authenticationToken = loginRequest.toAuthentication();
-            log.info("토큰 생성1 : {}", authenticationToken);
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-            log.info("유효성 검사 : {}", authenticationToken);
-            log.info("유효성 검사 : {}", authentication);
-            TokenResponse tokenResponse = jwtUtil.generateToken(authentication);
-            log.info("토큰 생성2 : {}", tokenResponse);
+            TokenResponse tokenResponse = jwtUtil.generateToken(authentication, response);
             // Refresh Token 을 DB 에 저장
             Token token = Token.builder()
                     .refreshToken(tokenResponse.getRefreshToken())
                     .build();
             token.setUser(user);
             tokenRepository.save(token);
-            log.info("토큰 저장 : {}", token);
-            return tokenResponse;
+            return TokenResponse.ofAccessToken(tokenResponse);
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
         throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
     // Access Token 만료시 토큰 재발행
-    public TokenResponse reissueToken(TokenRequest tokenRequest) {
+    public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
 
-        String refreshToken = tokenRequest.getRefreshToken();
         log.info("리프레시 토큰 변수 할당 : {}", refreshToken);
 
         // 매개변수로 들어온 Refresh Token 을 DB 에서의 존재 유무 확인
@@ -92,16 +85,18 @@ public class AuthService {
         log.info("토큰을 유저에서 받음 : {}", user);
         // 사용자가 매개변수로 들어온 Refresh Token 을 가지고 있는지 유무 체크 / 없으면 기존 Refresh Token 을 DB 에서 삭제
         if (!token.getRefreshToken().equals(refreshToken)) {
-            tokenRepository.deleteByUser(user);
+            tokenRepository.deleteByUserKey(user.getUserKey());
             throw new HiJackingException("유효한 Refresh Token 이 아닙니다 해당 계정의 Refresh Token 삭제.");
         }
 
         // RequestTokenDto 에서 추출한 refreshToken 의 유효성 검사
         Authentication authentication = jwtUtil.getAuthentication(refreshToken);
         log.info("리프레시 토큰 유효성 검사 : {}", authentication);
-
-        String accessToken = jwtUtil.generateAccessToken(authentication);
+        TokenResponse tokenResponse = jwtUtil.generateToken(authentication, response);
+        String accessToken = jwtUtil.generateAccessToken(authentication, response);
         log.info("유효성 검사후 엑세스 토큰 생성 : {}", accessToken);
+        token.setRefreshToken(tokenResponse.getRefreshToken());
+        tokenRepository.save(token);
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -208,9 +203,9 @@ public class AuthService {
     // 비밀번호 찾기시 이메일 존재 여부 확인
     public Boolean sendOtpForPasswordReset(String email) {
         // 새 OTP 생성시 기존의 OTP 삭제
-        emailValidationRepository.deleteExpiredOtp(new Date());
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("등록된 이메일이 존재하지 않습니다."));
+        emailValidationRepository.deleteByUserKey(user.getUserKey());
         int otp = otpGenerator();
         String htmlContent = "<h1>비밀번호 찾기 OTP</h1>"
                 + "<p>비밀번호 찾기 시 필요한 OTP 입니다 : </p>"
@@ -242,6 +237,12 @@ public class AuthService {
         }
         emailValidationRepository.deleteById(otpVerification.getId());
         return true;
+    }
+
+    public Boolean availableNewPassword(String email, String newPw) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+        return !passwordEncoder.matches(newPw, user.getPassword());
     }
 
     // 비밀번호 찾기 OTP 인증후에 비밀번호 변경

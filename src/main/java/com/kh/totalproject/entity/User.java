@@ -27,7 +27,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="user_key")
-    private Long id;
+    private Long userKey;
 
     @Column(nullable = false, unique = true, length = 30)
     @Size(min = 5, max = 30, message = "아이디는 5자 이상, 30자 이하 (영어 기준)")

@@ -60,7 +60,6 @@ public class SecurityConfig {
                                 "/community/list/comment",
 
                                 "/community/new/post" // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
-
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
@@ -101,6 +100,7 @@ public class SecurityConfig {
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
+        configuration.addExposedHeader("Set-Cookie");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -17,7 +17,7 @@ public class Token {
     @Id
     @Column(name = "token_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String refreshToken;
 
     @OneToOne(cascade = CascadeType.PERSIST)

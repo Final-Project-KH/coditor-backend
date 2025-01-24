@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
-    @Query("SELECT b FROM Board b WHERE b.user.id = :userId")
-    Page<Board> findByUserId(@Param("userId") Long userId, Pageable pageable);
+    @Query("SELECT b FROM Board b WHERE b.user.userKey = :userKey")
+    Page<Board> findByUserId(@Param("userKey") Long userKey, Pageable pageable);
 
 }

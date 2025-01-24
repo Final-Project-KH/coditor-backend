@@ -59,7 +59,7 @@ public class CommunityServiceTest {
         CodingBoard codingBoard = new CodingBoard();
         User user = new User();
         user.setNickname("국누나짱짱맨11");
-        user.setId(3L);
+        user.setUserKey(3L);
         user.setUserId("testtest1123");
         user.setEmail("testemail12wqewqe324@gmail.com");
         user.setPassword("testasdfsdf124@!");
@@ -78,7 +78,7 @@ public class CommunityServiceTest {
         assertEquals("테스트 내용입니다.", codingBoard.getContent(), "내용이 올바르지 않습니다.");
         assertEquals("www.firebase.blahblah.com", codingBoard.getImgUrl(), "이미지 URL 이 올바르지 않습니다.");
         assertEquals(Solution.UNSOLVED, codingBoard.getSolution(), "문제 해결 상태가 올바르지 않습니다.");
-        assertNotNull(user.getId(), "User 정상적으로 저장되지 않았습니다.");
+        assertNotNull(user.getUserKey(), "User 정상적으로 저장되지 않았습니다.");
     }
 
     @Test
