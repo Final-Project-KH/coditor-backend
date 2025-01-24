@@ -1,8 +1,10 @@
 package com.kh.totalproject.controller;
 
+import com.google.api.Http;
 import com.kh.totalproject.dto.request.KakaoLoginRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.service.KakaoService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,14 +25,14 @@ public class KakaoController {
 
     // 카카오 로그인 처리 (DTO 사용)
     @PostMapping("/kakao/login")
-    public ResponseEntity<?> kakaoLogin(@RequestBody KakaoLoginRequest kakaoLoginRequest) {
+    public ResponseEntity<?> kakaoLogin(@RequestBody KakaoLoginRequest kakaoLoginRequest, HttpServletResponse response) {
         String kakaoToken = kakaoLoginRequest.getToken();  // DTO에서 카카오 토큰 추출
         if (kakaoToken == null || kakaoToken.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "카카오 토큰이 누락되었습니다."));
         }
 
         try {
-            TokenResponse tokenResponse = kakaoService.login(kakaoToken);  // 카카오 로그인 처리
+            TokenResponse tokenResponse = kakaoService.login(kakaoToken, response);  // 카카오 로그인 처리
             Map<String, String> result = new HashMap<>();
             result.put("grantType", "Bearer");
             result.put("accessToken", tokenResponse.getAccessToken());

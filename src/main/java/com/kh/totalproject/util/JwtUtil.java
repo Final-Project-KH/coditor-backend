@@ -9,6 +9,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,7 +29,8 @@ import java.util.*;
 public class JwtUtil {
 
     private final String secretKey;
-    private static final long EXPIRATION_TIME = 1000*60*60;
+//    private static final long EXPIRATION_TIME = 1000*60*60;
+    private static final long EXPIRATION_TIME = 1000*60;
     private final UserRepository userRepository;
 
     // Secret key 받아오기
@@ -78,13 +81,13 @@ public class JwtUtil {
 //    }
 
     // 기존 generateToken(Authentication) 메서드 유지
-    public TokenResponse generateToken(Authentication authentication) {
+    public TokenResponse generateToken(Authentication authentication, HttpServletResponse response) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return generateTokenFromUserDetails(userDetails);
+        return generateTokenFromUserDetails(userDetails, response);
     }
 
     // 새로운 메서드: User 엔티티 기반 JWT 생성
-    public TokenResponse generateTokenFromUser(com.kh.totalproject.entity.User user) {
+    public TokenResponse generateTokenFromUser(com.kh.totalproject.entity.User user, HttpServletResponse response) {
         // CustomUserDetails 생성 없이 바로 JWT 발급을 위해 필요한 정보 추출
         // 필요한 경우, CustomUserDetails를 생성할 수도 있습니다.
         CustomUserDetails userDetails = new CustomUserDetails(
@@ -95,19 +98,19 @@ public class JwtUtil {
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );
-        return generateTokenFromUserDetails(userDetails);
+        return generateTokenFromUserDetails(userDetails, response);
     }
 
     // 내부적으로 JWT 생성 로직을 담당하는 메서드
-    private TokenResponse generateTokenFromUserDetails(CustomUserDetails userDetails) {
+    private TokenResponse generateTokenFromUserDetails(CustomUserDetails userDetails, HttpServletResponse response) {
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
         long now = (new Date()).getTime();
         Date accessTokenExpiresIn = new Date(now + EXPIRATION_TIME);
-        Date refreshTokenExpiresIn = new Date(now + 60 * 60 * 1000 * 24 * 6); // 6일
+        Date refreshTokenExpiresIn = new Date(now + 60 * 60 * 1000 * 24 * 7); // 일주일
 
         // Access Token 생성
         String accessToken = Jwts.builder()
-                .subject(String.valueOf(userDetails.getId()))
+                .subject(String.valueOf(userDetails.getUserKey()))
                 .claim("nickname", userDetails.getNickname())
                 .claim("authorities", userDetails.getAuthorities())
                 .issuedAt(new Date())
@@ -117,13 +120,23 @@ public class JwtUtil {
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
-                .subject(String.valueOf(userDetails.getId()))
-                .claim("nickname", userDetails.getNickname())
+                .subject(String.valueOf(userDetails.getUserKey()))
                 .claim("authorities", userDetails.getAuthorities())
                 .issuedAt(new Date())
                 .expiration(refreshTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가능
+        refreshTokenCookie.setSecure(false); // HTTPS에서만 전송 (현재는 http에서 진행하기 때문에 false)
+        refreshTokenCookie.setPath("/"); // 나중에 경로 제한 할지 생각해야함
+        refreshTokenCookie.setMaxAge(60*60*24*7);
+//        refreshTokenCookie.setAttribute("SameSite", "None");
+
+        log.info(String.valueOf(refreshTokenCookie));
+
+        response.addCookie(refreshTokenCookie);
 
         return TokenResponse.builder()
                 .grantType("Bearer")
@@ -147,9 +160,9 @@ public class JwtUtil {
         // Access Token 만료시 인증 객체 커스텀 필드
         // 로그인때와 마찬가지로 유저 정보를 확인후 검증
         CustomUserDetails userDetails = new CustomUserDetails(
+                user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getUserId(), // primaryKey
                 user.getUserKey(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
@@ -174,8 +187,8 @@ public class JwtUtil {
     }
 
     // access 토큰 재발급
-    public String generateAccessToken(Authentication authentication) {
-        return generateToken(authentication).getAccessToken();
+    public String generateAccessToken(Authentication authentication, HttpServletResponse response) {
+        return generateToken(authentication, response).getAccessToken();
     }
 
     public boolean validateToken(String token){
