@@ -1,6 +1,7 @@
 package com.kh.totalproject.entity;
 
 import com.kh.totalproject.constant.*;
+import com.kh.totalproject.repository.CommentRepository;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -69,11 +70,6 @@ public class Board {
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BoardReaction> boardReactions = new ArrayList<>();
 
-    // 댓글 수를 동적으로 계산
-    public int getCommentCnt() {
-        return comments == null ? 0 : comments.size();
-    }
-
     public void addComment(Comment comment) {
         comments.add(comment);
         comment.setBoard(this);
@@ -91,33 +87,19 @@ public class Board {
                 .count();
     }
 
-    // 싫어요 수를 동적으로 계산하고 dislikeCnt 필드를 업데이트
+    // 싫어요 수를 동적으로 계산
     public int getDislikeCnt() {
         return (int) boardReactions.stream()
                 .filter(reaction -> reaction.getReaction().equals(Reaction.DISLIKE))
                 .count();
     }
 
-    // 좋아요와 싫어요 카운트를 반환하는 메서드
-    public Reaction getReactionStatus() {
-        if (likeCnt == 0 && dislikeCnt == 0) {
-            return Reaction.NONE; // 좋아요와 싫어요가 모두 0일 때 NONE 반환
-        }
-
-        if (likeCnt > 0) {
-            return Reaction.LIKE; // 좋아요가 있으면 LIKE 반환
-        }
-
-        return Reaction.DISLIKE; // 싫어요만 있으면 DISLIKE 반환
-    }
-
     // 사용자의 반응을 처리 (사용자가 좋아요, 싫어요를 했는지 확인)
     public Reaction getUserReaction(User user) {
-        BoardReaction reaction = boardReactions.stream()
+        return boardReactions.stream()
                 .filter(br -> br.getUser().equals(user))
                 .findFirst()
-                .orElse(null);
-
-        return reaction != null ? reaction.getReaction() : Reaction.NONE;
+                .map(BoardReaction::getReaction)
+                .orElse(Reaction.NONE);
     }
 }

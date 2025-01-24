@@ -54,7 +54,12 @@ dependencies {
 	// 이메일 인증
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+	// hibernate 추가 JSON 타입 필드 사용
+	implementation 'org.hibernate.orm:hibernate-core:6.6.4.Final'
+	implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
 
+	// 스프링부트 JPA Json 타입 정렬 관련 
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 }
 
 tasks.named('test') {

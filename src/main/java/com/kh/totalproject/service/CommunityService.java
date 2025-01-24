@@ -6,23 +6,32 @@
 package com.kh.totalproject.service;
 
 import com.kh.totalproject.constant.BoardType;
+import com.kh.totalproject.constant.Reaction;
+import com.kh.totalproject.constant.Status;
 import com.kh.totalproject.dto.request.BoardRequest;
 import com.kh.totalproject.dto.request.CommentRequest;
+import com.kh.totalproject.dto.response.BoardReactionResponse;
 import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.dto.response.CommentResponse;
 import com.kh.totalproject.entity.*;
 import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -36,6 +45,7 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CommentRepository commentRepository;
+    private final BoardReactionRepository boardReactionRepository;
     private final JwtUtil jwtUtil;
 
     // 게시글 생성 서비스
@@ -171,54 +181,93 @@ public class CommunityService {
         return true;
     }
 
-    public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType, String sortBy, String order) {
-        // 정렬시 기본값 설정, 페이지에 처음 접근할때
-        if (sortBy == null || sortBy.isEmpty()) {
-            sortBy = "createdAt";  // 기본적으로 최신순
-        }
-        if (order == null || order.isEmpty()) {
-            order = "DESC";  // 기본적으로 내림차순
-        }
-        
-        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
-        Pageable pageable = PageRequest.of(page -1, size, sort);
-
-        // 게시판 타입
+    public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType,
+                                                          String sortBy, String order,
+                                                          String status, String enumFilter) {
         BoardType type = BoardType.fromString(boardType);
 
-        // 각 게시판에 따른 추가 정렬 처리 상태를 분별해줌 예) 모집중 / 모집완료
-        if ("status".equals(sortBy) && (type == BoardType.STUDY || type == BoardType.TEAM)) {
-            // status 값을 기준으로 정렬: ACTIVE 와 INACTIVE 로 정렬
-            if ("ACTIVE".equals(order)) {
-                sort = Sort.by(Sort.Direction.ASC, "status");  // 모집중 게시글을 오름차순으로 정렬
-            } else if ("INACTIVE".equals(order)) {
-                sort = Sort.by(Sort.Direction.DESC, "status");  // 모집완료 게시글을 내림차순으로 정렬
-            }
-            pageable = PageRequest.of(page - 1, size, sort);
-        } else if ("solution".equals(sortBy) && type == BoardType.CODING) {
-            // solution 값을 기준으로 정렬: SOLVED 와 UNSOLVED 로 정렬
-            if ("SOLVED".equals(order)) {
-                sort = Sort.by(Sort.Direction.DESC, "solution");  // 해결된 게시글을 내림차순으로 정렬
-            } else if ("UNSOLVED".equals(order)) {
-                sort = Sort.by(Sort.Direction.ASC, "solution");  // 미해결 게시글을 오름차순으로 정렬
-            }
-            pageable = PageRequest.of(page - 1, size, sort);
-        } else if ("likeCnt".equals(sortBy) || "commentCnt".equals(sortBy)) {
-            // 좋아요와 댓글순서 정렬
-            sort = Sort.by(Sort.Direction.fromString(order), sortBy);
-            pageable = PageRequest.of(page - 1, size, sort);
+        // 정렬 설정
+        if (sortBy == null || sortBy.isEmpty()) {
+            sortBy = "createdAt";
+        }
+        if (order == null || order.isEmpty()) {
+            order = "DESC";
         }
 
-        // 각 게시판에 맞는 데이터를 조회하여 반환
+        Sort sort = createSort(sortBy, order);
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+
+        // 동적 쿼리 생성
+        Specification<?> spec = createSpecification(type, status, enumFilter);
+
+        // 게시판 타입에 따른 repository 선택 및 쿼리 실행
+        Page<?> result = switch (type) {
+            case CODING -> codingBoardRepository.findAll((Specification<CodingBoard>) spec, pageable);
+            case COURSE -> courseBoardRepository.findAll((Specification<CourseBoard>) spec, pageable);
+            case STUDY -> studyBoardRepository.findAll((Specification<StudyBoard>) spec, pageable);
+            case TEAM -> teamBoardRepository.findAll((Specification<TeamBoard>) spec, pageable);
+        };
+
+        // 결과를 BoardResponse 로 매핑
+        return result.map(board -> mapToBoardResponse(board, type));
+    }
+
+    private Sort createSort(String sortBy, String order) {
+        Sort.Direction direction = Sort.Direction.fromString(order);
+        return switch (sortBy) {
+            case "createdAt", "viewCnt", "likeCnt", "commentCnt" -> Sort.by(direction, sortBy);
+            case "status" -> Sort.by(Sort.Order.by("status"), Sort.Order.desc("createdAt"));
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
+    }
+
+    private Specification<?> createSpecification(BoardType type, String status, String enumFilter) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 상태 필터
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), Status.valueOf(status)));
+            }
+
+            // Enum 필터 (JSON 타입 필드 검색)
+            if (enumFilter != null && !enumFilter.isEmpty()) {
+                String fieldName = switch (type) {
+                    case CODING -> "language";
+                    case COURSE -> "course";
+                    case STUDY -> "study";
+                    case TEAM -> "team";
+                };
+                predicates.add(cb.isTrue(cb.function("JSON_CONTAINS", Boolean.class,
+                        root.get(fieldName), cb.literal('"' + enumFilter + '"'), cb.literal("$"))));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    private BoardResponse mapToBoardResponse(Object board, BoardType type) {
         return switch (type) {
-            case CODING -> codingBoardRepository.findAll(pageable).map(board ->
-                    BoardResponse.ofAllCodingBoard(board, board.getCommentCnt(), board.getLikeCnt(), board.getDislikeCnt()));
-            case COURSE -> courseBoardRepository.findAll(pageable).map(board ->
-                    BoardResponse.ofAllCourseBoard(board, board.getCommentCnt(), board.getLikeCnt(), board.getDislikeCnt()));
-            case STUDY -> studyBoardRepository.findAll(pageable).map(board ->
-                    BoardResponse.ofAllStudyBoard(board, board.getCommentCnt(), board.getLikeCnt(), board.getDislikeCnt()));
-            case TEAM -> teamBoardRepository.findAll(pageable).map(board ->
-                    BoardResponse.ofAllTeamBoard(board, board.getCommentCnt(), board.getLikeCnt(), board.getDislikeCnt()));
+            case CODING -> {
+                CodingBoard codingBoard = (CodingBoard) board;
+                int commentCnt = commentRepository.countByBoardId(codingBoard.getId());
+                yield BoardResponse.ofAllCodingBoard(codingBoard, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());
+            }
+            case COURSE -> {
+                CourseBoard courseBoard = (CourseBoard) board;
+                int commentCnt = commentRepository.countByBoardId(courseBoard.getId());
+                yield BoardResponse.ofAllCourseBoard(courseBoard, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
+            }
+            case STUDY -> {
+                StudyBoard studyBoard = (StudyBoard) board;
+                int commentCnt = commentRepository.countByBoardId(studyBoard.getId());
+                yield BoardResponse.ofAllStudyBoard(studyBoard, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
+            }
+            case TEAM -> {
+                TeamBoard teamBoard = (TeamBoard) board;
+                int commentCnt = commentRepository.countByBoardId(teamBoard.getId());
+                yield BoardResponse.ofAllTeamBoard(teamBoard, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+            }
         };
     }
 
@@ -230,25 +279,29 @@ public class CommunityService {
                 CodingBoard codingBoard = codingBoardRepository.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
                 increaseViewCnt(codingBoard);   // 조회수 증가 로직 실행
-                yield BoardResponse.ofOneCodingPost(codingBoard, codingBoard.getCommentCnt(), codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());  // 반환 값을 Response 로 지정
+                int commentCnt = commentRepository.countByBoardId(id);  // 댓글수 불러오기
+                yield BoardResponse.ofOneCodingPost(codingBoard, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());  // 반환 값을 Response 로 지정
             }
             case COURSE -> {
                 CourseBoard courseBoard = courseBoardRepository.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
                 increaseViewCnt(courseBoard);
-                yield BoardResponse.ofOneCoursePost(courseBoard, courseBoard.getCommentCnt(), courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
+                int commentCnt = commentRepository.countByBoardId(id);
+                yield BoardResponse.ofOneCoursePost(courseBoard, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
             }
             case STUDY -> {
                 StudyBoard studyBoard = studyBoardRepository.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
                 increaseViewCnt(studyBoard);
-                yield BoardResponse.ofOneStudyPost(studyBoard, studyBoard.getCommentCnt(), studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
+                int commentCnt = commentRepository.countByBoardId(id);
+                yield BoardResponse.ofOneStudyPost(studyBoard, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
             }
             case TEAM -> {
                 TeamBoard teamBoard = teamBoardRepository.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
                 increaseViewCnt(teamBoard);
-                yield BoardResponse.ofOneTeamPost(teamBoard, teamBoard.getCommentCnt(), teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+                int commentCnt = commentRepository.countByBoardId(id);
+                yield BoardResponse.ofOneTeamPost(teamBoard, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
     }
@@ -327,10 +380,76 @@ public class CommunityService {
     }
 
     public Boolean deleteComment(String authorizationHeader, Long id) {
-        return null;
+        try {
+            String token = authorizationHeader.replace("Bearer ", "");
+            jwtUtil.getAuthentication(token);
+            Long userId = jwtUtil.extractUserId(token);
+
+            // 유저 검증
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+
+            // 댓글 검증
+            Comment comment = commentRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("삭제 할 댓글이 없습니다."));
+
+            // 권한 검증
+            if (!comment.getUser().getUserId().equals(user.getUserId())) {
+                throw new SecurityException("삭제할 권한이 없습니다.");
+            }
+
+            commentRepository.deleteById(id);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    public Object voteForPost(String authorizationHeader, Long id, Boolean like, Boolean dislike) {
-        return null;
+    public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("유저가 존재 하지 않습니다."));
+
+        Optional<BoardReaction> existingReaction = boardReactionRepository.findByBoardAndUser(board, user);
+
+        if (existingReaction.isPresent()) {
+            BoardReaction reaction = existingReaction.get();
+            if (reaction.getReaction() == reactionType) {
+                // 같은 반응을 다시 누르면 반응 제거
+                boardReactionRepository.delete(reaction);
+                board.getBoardReactions().remove(reaction);
+            } else {
+                // 다른 반응으로 변경
+                reaction.setReaction(reactionType);
+            }
+        } else {
+            // 새로운 반응 추가
+            BoardReaction newReaction = BoardReaction.builder()
+                    .board(board)
+                    .user(user)
+                    .reaction(reactionType)
+                    .build();
+            board.getBoardReactions().add(newReaction);
+            boardReactionRepository.save(newReaction);
+        }
+
+        // 좋아요와 싫어요 수 업데이트
+        board.setLikeCnt(board.getLikeCnt());
+        board.setDislikeCnt(board.getDislikeCnt());
+        boardRepository.save(board);
+    }
+
+    public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("유저가 존재하지 않습니다."));
+
+        Reaction userReaction = board.getUserReaction(user);
+        int likeCnt = board.getLikeCnt();
+        int dislikeCnt = board.getDislikeCnt();
+
+        return new BoardReactionResponse(userReaction, likeCnt, dislikeCnt);
     }
 }

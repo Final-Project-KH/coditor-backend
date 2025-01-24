@@ -1,8 +1,10 @@
 /* 각각 커뮤니티에 해당하는 게시글 보기, 게시글 작성, 게시글 수정 등등 요청과 응답에 필요한 컨트롤러 */
 package com.kh.totalproject.controller;
 
+import com.kh.totalproject.constant.Reaction;
 import com.kh.totalproject.dto.request.BoardRequest;
 import com.kh.totalproject.dto.request.CommentRequest;
+import com.kh.totalproject.dto.response.BoardReactionResponse;
 import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.dto.response.CommentResponse;
 import com.kh.totalproject.service.CommunityService;
@@ -48,9 +50,11 @@ public class CommunityController {
     ResponseEntity<Page<BoardResponse>> listAll(@RequestParam(defaultValue = "1") int page,
                                                 @RequestParam(defaultValue = "10") int size,
                                                 @RequestParam String boardType,
-                                                @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order));
+                                                @RequestParam(required = false) String sortBy,
+                                                @RequestParam(required = false) String order,
+                                                @RequestParam(required = false) String status,
+                                                @RequestParam(required = false) String enumFilter) {
+        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter));
     }
 
     // 게시판별 단일 게시글 조회시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
@@ -89,12 +93,18 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.deleteComment(authorizationHeader, id));
     }
 
-    // 좋아요, 싫어요 - 게시글 반응
-    @PostMapping("/vote")
-    ResponseEntity<?> vote(@RequestHeader("Authorization") String authorizationHeader,
-                                 @RequestParam Long id,
-                                 @RequestParam Boolean like,
-                                 @RequestParam Boolean dislike) {
-        return ResponseEntity.ok(communityService.voteForPost(authorizationHeader, id, like, dislike));
+    @PostMapping("/reaction/voting")
+    public ResponseEntity<?> toggleReaction(@RequestParam Long boardId,
+                                            @RequestParam Long userId,
+                                            @RequestParam Reaction reaction) {
+        communityService.toggleReaction(boardId, userId, reaction);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/reaction/status")
+    public ResponseEntity<BoardReactionResponse> getReactionStatus(@RequestParam Long boardId,
+                                                                   @RequestParam Long userId) {
+        BoardReactionResponse reactionStatus = communityService.getReactionStatus(boardId, userId);
+        return ResponseEntity.ok(reactionStatus);
     }
 }
