@@ -61,7 +61,6 @@ public class SecurityConfig {
 
                                 "/community/list/one",
                                 "/community/new/post" // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
-
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
