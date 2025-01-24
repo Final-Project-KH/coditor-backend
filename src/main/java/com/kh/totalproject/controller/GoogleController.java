@@ -8,6 +8,7 @@ import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -31,14 +32,14 @@ public class GoogleController {
 
     // 구글 로그인 처리 (DTO 사용)
     @PostMapping("/google/login")
-    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest googleLoginRequest) {
+    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest googleLoginRequest, HttpServletResponse response) {
         String googleToken = googleLoginRequest.getToken();  // DTO에서 구글 토큰 추출
         if (googleToken == null || googleToken.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "구글 토큰이 누락되었습니다."));
         }
 
         try {
-            TokenResponse tokenResponse = googleService.login(googleToken);  // 구글 로그인 처리
+            TokenResponse tokenResponse = googleService.login(googleToken, response);  // 구글 로그인 처리
             Map<String, String> result = new HashMap<>();
             result.put("grantType", "Bearer");
             result.put("accessToken", tokenResponse.getAccessToken());

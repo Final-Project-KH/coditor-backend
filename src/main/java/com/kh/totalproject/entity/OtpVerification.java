@@ -24,4 +24,5 @@ public class OtpVerification {
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_key", referencedColumnName = "user_key")
     private User user;
+
 }

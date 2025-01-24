@@ -35,10 +35,10 @@ public class CustomUserDetailService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found : " + userId));
 
         return new CustomUserDetails(
+                user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getUserId(),
-                user.getId(),
+                user.getUserKey(),
                 user.getPassword(), // 비밀번호 포함
                 Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
         );
