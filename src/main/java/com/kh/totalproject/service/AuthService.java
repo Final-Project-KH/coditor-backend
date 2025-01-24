@@ -80,9 +80,6 @@ public class AuthService {
     }
     // Access Token 만료시 토큰 재발행
     public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
-
-        log.info("리프레시 토큰 변수 할당 : {}", refreshToken);
-
         // 매개변수로 들어온 Refresh Token 을 DB 에서의 존재 유무 확인
         Token token = tokenRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new BadCredentialsException("유효한 Refresh 토큰이 아닙니다."));

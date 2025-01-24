@@ -39,6 +39,11 @@ public class CodeChallengeController {
         );
     }
 
+    @GetMapping("/before-subscribe")
+    public ResponseEntity<Void> beforeSubscribe() {
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
             HttpServletRequest request,
