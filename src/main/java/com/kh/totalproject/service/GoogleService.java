@@ -2,7 +2,9 @@ package com.kh.totalproject.service;
 
 import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.dto.response.TokenResponse;
+import com.kh.totalproject.entity.Token;
 import com.kh.totalproject.entity.User;
+import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -27,7 +29,7 @@ import java.util.UUID;
 @Service
 @Transactional
 public class GoogleService implements OAuth2Service {
-
+    private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -72,6 +74,12 @@ public class GoogleService implements OAuth2Service {
         TokenResponse tokenResponse = jwtUtil.generateTokenFromUser(member, response);
         tokenResponse.setNewUser(isNewUser); // 신규 사용자 여부 추가
 
+        Token token = Token.builder()
+                .refreshToken(tokenResponse.getRefreshToken())
+                .build();
+        token.setUser(member);
+
+        tokenRepository.save(token);
         //log.info("TokenResponse: {}", tokenResponse);
         return tokenResponse;
     }

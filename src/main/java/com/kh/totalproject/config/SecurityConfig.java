@@ -60,7 +60,8 @@ public class SecurityConfig {
                                 "/community/list/comment",
 
                                 "/community/list/one",
-                                "/community/new/post" // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
+                                "/community/new/post", // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
+                                "/callback/**" // 임시 open
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
