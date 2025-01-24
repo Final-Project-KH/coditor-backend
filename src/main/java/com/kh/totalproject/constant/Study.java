@@ -8,8 +8,7 @@ public enum Study {
     ALGORITHM("알고리즘"),
     STRUCTURE("자료구조"),
     CODING("코딩테스트"),
-    ECT("기타"),
-    NONE("");
+    ECT("기타");
     private final String displayName;
 
     Study(String displayName) {

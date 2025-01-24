@@ -18,8 +18,7 @@ public enum Language {
     NO("NodeJS"),
     HTML("HTML"),
     CSS("CSS"),
-    ETC("기타"),
-    NONE("");
+    ETC("기타");
     private final String displayName;
 
     Language(String displayName) {

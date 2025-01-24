@@ -1,15 +1,18 @@
 package com.kh.totalproject.entity;
 
-import com.kh.totalproject.constant.Language;
-import com.kh.totalproject.constant.Solution;
+import com.kh.totalproject.constant.Status;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "coding_board")
@@ -19,27 +22,30 @@ import java.time.LocalDateTime;
 public class CodingBoard extends Board {
 
     @Enumerated(EnumType.STRING)
-    private Solution solution;
+    private Status status;
 
-    @Enumerated(EnumType.STRING)
-    private Language language;
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
+    private List<String> language;
+
 
     @PrePersist
     private void defaultValues() {
-        if (solution == null){
-            this.solution = Solution.UNSOLVED;
+        if (status == null) {
+            this.status = Status.ACTIVE;
         }
 
-        if (language == null){
-            this.language = Language.NONE;
+        if (language == null) {
+            this.language = new ArrayList<>();
         }
+
     }
 
     @Builder
     public CodingBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
-                       LocalDateTime updatedAt, Solution solution, Language language) {
+                       LocalDateTime updatedAt, Status status, List<String> language) {
         super(boardId, title, content, imgUrl, createdAt, updatedAt);
-        this.solution = solution;
+        this.status = status;
         this.language = language;
         this.setUser(user);
     }
