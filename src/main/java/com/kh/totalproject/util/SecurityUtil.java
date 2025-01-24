@@ -28,7 +28,7 @@ public class SecurityUtil {
         }
 
         CustomUserDetails userDetails = (CustomUserDetails) principal;
-        Long userId = userDetails.getId();
+        Long userId = userDetails.getUserKey();
         if (userId == null) {
             log.info("[SecurityUtil.getCurrentUserIdOrThrow] 사용자 ID를 찾을 수 없습니다.");
             throw new UnauthenticatedException();
