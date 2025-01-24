@@ -14,6 +14,6 @@ import java.util.Optional;
 public interface TokenRepository extends JpaRepository<Token, Long> {
     Optional<Token> findByRefreshToken(String refreshToken);
     @Modifying
-    @Query("DELETE FROM Token t WHERE t.user = :user")
-    void deleteByUser(@Param("user") User user);
+    @Query("DELETE FROM Token t WHERE t.user.userKey = :userKey")
+    void deleteByUserKey(@Param("userKey") Long userKey);
 }

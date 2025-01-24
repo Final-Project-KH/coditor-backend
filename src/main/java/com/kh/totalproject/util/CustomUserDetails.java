@@ -12,18 +12,18 @@ import java.util.Collection;
 @Setter
 public class CustomUserDetails implements UserDetails {
 
-    private final Long id;
+    private final Long userKey;
     private final String userId;
     private final String email;
     private final String nickname;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(String userId, String email, String nickname, Long id, String password, Collection<? extends GrantedAuthority> authorities){
+    public CustomUserDetails(String userId, String email, String nickname, Long userKey, String password, Collection<? extends GrantedAuthority> authorities){
+        this.userId = userId;
         this.email = email;
         this.nickname = nickname;
-        this.userId = userId;
-        this.id = id;
+        this.userKey = userKey;
         this.password = password;
         this.authorities = authorities;
     }
@@ -61,4 +61,5 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

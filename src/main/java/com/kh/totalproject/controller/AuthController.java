@@ -11,6 +11,7 @@ import com.kh.totalproject.exception.HiJackingException;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
 import com.kh.totalproject.service.KakaoService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,15 +29,19 @@ public class AuthController {
 
     // 로그인 요청, 응답 (Access, Refresh Token 전달)
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> signIn(@RequestBody LoginRequest loginRequest){
-        return ResponseEntity.ok(authService.logIn(loginRequest));
+    public ResponseEntity<TokenResponse> signIn(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
+        return ResponseEntity.ok(authService.logIn(loginRequest, response));
     }
 
     // 엑세스 토큰 만료시 요청, 응답
     @PostMapping("/reissue")
-    public ResponseEntity<?> reissueToken(@RequestBody TokenRequest tokenRequest) {
+    public ResponseEntity<?> reissueToken(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+        log.info("받은 refreshToken: {}", refreshToken);
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
+        }
         try {
-            TokenResponse tokenResponseDto = authService.reissueToken(tokenRequest);
+            TokenResponse tokenResponseDto = authService.reissueToken(refreshToken, response);
             log.info("서비스로직 시작 : {}", tokenResponseDto);
             return ResponseEntity.ok(tokenResponseDto);
         } catch (HiJackingException e) {
@@ -94,6 +99,11 @@ public class AuthController {
     public ResponseEntity<Boolean> otpValidationForPwFind(@PathVariable Integer otp, @PathVariable String email) {
         return ResponseEntity.ok(authService.validateOtpForPw(otp, email));
     }
+    // 회원가입시 존재여부 유효성 검사
+    @PostMapping("/forgotpw/validate")
+    public ResponseEntity<Boolean> validateForNewPassword(@RequestParam String email, @RequestParam String newpassword) {
+        return ResponseEntity.ok(authService.availableNewPassword(email, newpassword));
+    }
 
     // 비밀번호 찾기 첫번째 페이지에서 OTP 인증 후 비밀번호 재설정에 필요한 정보를 요청, 응답 컨트롤러
     @PutMapping("/resetpw/{email}")
@@ -105,12 +115,12 @@ public class AuthController {
     private final KakaoService kakaoService;
 
     @PostMapping("/google")
-    public TokenResponse googleLogin(@RequestBody String idToken) {
-        return googleService.login(idToken);
+    public TokenResponse googleLogin(@RequestBody String idToken, HttpServletResponse response) {
+        return googleService.login(idToken, response);
     }
 
     @PostMapping("/kakao")
-    public TokenResponse kakaoLogin(@RequestBody String accessToken) {
-        return kakaoService.login(accessToken);
+    public TokenResponse kakaoLogin(@RequestBody String accessToken, HttpServletResponse response) {
+        return kakaoService.login(accessToken, response);
     }
 }

@@ -1,11 +1,11 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.constant.Role;
 import com.kh.totalproject.dto.response.KakaoUserInfoResponse;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class KakaoService implements OAuth2Service {
     private final JwtUtil jwtUtil;
 
     @Override
-    public TokenResponse login(String accessToken) {
+    public TokenResponse login(String accessToken, HttpServletResponse response) {
         if (accessToken == null || accessToken.isEmpty()) {
             log.error("카카오 액세스 토큰이 유효하지 않습니다.");
             throw new IllegalArgumentException("카카오 액세스 토큰이 유효하지 않습니다.");
@@ -54,7 +54,7 @@ public class KakaoService implements OAuth2Service {
 
         User member = createNewMember(userInfoResponse);
 
-        return jwtUtil.generateTokenFromUser(member);
+        return jwtUtil.generateTokenFromUser(member, response);
     }
 
     @Override
