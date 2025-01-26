@@ -38,3 +38,6 @@ out/
 
 # Ignore ..env file
 .env
+
+### Firebase API Key
+src/main/resources/firebase-service-account.json
