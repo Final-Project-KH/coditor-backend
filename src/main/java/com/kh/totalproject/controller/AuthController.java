@@ -7,6 +7,7 @@ import com.kh.totalproject.dto.request.TokenRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
+import com.kh.totalproject.entity.Token;
 import com.kh.totalproject.exception.HiJackingException;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
@@ -33,10 +34,15 @@ public class AuthController {
         return ResponseEntity.ok(authService.logIn(loginRequest, response));
     }
 
+    @PostMapping("/autologin")
+    public ResponseEntity<Boolean> autoLogIn(@RequestHeader("Authorization") String accessToken){
+        return ResponseEntity.ok(authService.autoLogIn(accessToken));
+    }
+
     // 엑세스 토큰 만료시 요청, 응답
     @PostMapping("/reissue")
     public ResponseEntity<?> reissueToken(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
-        log.info("받은 refreshToken: {}", refreshToken);
+        log.info("받은 refreshToken: '{}'", refreshToken);
         if (refreshToken == null || refreshToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
         }
