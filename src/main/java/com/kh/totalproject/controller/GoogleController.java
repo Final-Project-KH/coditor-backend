@@ -45,6 +45,7 @@ public class GoogleController {
             result.put("accessToken", tokenResponse.getAccessToken());
             result.put("refreshToken", tokenResponse.getRefreshToken());
             result.put("isNewUser", String.valueOf(tokenResponse.isNewUser())); // isNewUser 값 추가
+
             return ResponseEntity.ok(result);  // 성공적인 응답 반환
         } catch (Exception e) {
             log.error("구글 로그인 처리 중 오류 발생: {}", e.getMessage());
