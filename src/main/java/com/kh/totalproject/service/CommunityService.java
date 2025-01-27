@@ -29,9 +29,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -60,9 +62,11 @@ public class CommunityService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: " + userId));
 
+            // setName 으로 닉네임을 변수값으로 지정
             boardRequest.setName(user.getNickname());
             // Enum -> String 타입변환
             BoardType type = BoardType.fromString(boardType);
+            // 엔티티화 한후 저장
             Board boardEntity = createBoardEntity(boardRequest, user, type);
             // 생성된 게시글 저장 return true
             return saveBoardEntity(boardEntity);
@@ -183,7 +187,7 @@ public class CommunityService {
 
     public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType,
                                                           String sortBy, String order,
-                                                          String status, String enumFilter) {
+                                                          String status, String enumFilter, String search) {
         BoardType type = BoardType.fromString(boardType);
 
         // 정렬 설정
@@ -198,7 +202,7 @@ public class CommunityService {
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
         // 동적 쿼리 생성
-        Specification<?> spec = createSpecification(type, status, enumFilter);
+        Specification<?> spec = createSpecification(type, status, enumFilter, search);
 
         // 게시판 타입에 따른 repository 선택 및 쿼리 실행
         Page<?> result = switch (type) {
@@ -212,6 +216,7 @@ public class CommunityService {
         return result.map(board -> mapToBoardResponse(board, type));
     }
 
+    // 정렬 생성 case 별
     private Sort createSort(String sortBy, String order) {
         Sort.Direction direction = Sort.Direction.fromString(order);
         return switch (sortBy) {
@@ -221,8 +226,10 @@ public class CommunityService {
         };
     }
 
-    private Specification<?> createSpecification(BoardType type, String status, String enumFilter) {
+    // specification 생성, enum json 타입 검색과 게시판 전체검색 구현
+    private Specification<?> createSpecification(BoardType type, String status, String enumFilter, String search) {
         return (root, query, cb) -> {
+            // predicate 생성
             List<Predicate> predicates = new ArrayList<>();
 
             // 상태 필터
@@ -241,11 +248,21 @@ public class CommunityService {
                 predicates.add(cb.isTrue(cb.function("JSON_CONTAINS", Boolean.class,
                         root.get(fieldName), cb.literal('"' + enumFilter + '"'), cb.literal("$"))));
             }
+            
+            // 검색 = 제목 + 내용
+            if (search != null && !search.isEmpty()) {
+                String searchPatten = "%" + search + "%";   // 제목과 내용을 복합하는 변수
+                predicates.add(cb.or(
+                        cb.like(root.get("title"), searchPatten),
+                        cb.like(root.get("content"), searchPatten)
+                ));
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
+    // 게시판별 맵핑 yield 사용시 반환과 로직수행 둘다 가능
     private BoardResponse mapToBoardResponse(Object board, BoardType type) {
         return switch (type) {
             case CODING -> {
@@ -272,36 +289,33 @@ public class CommunityService {
     }
 
     // 각 게시판 별 단일 글을 불러오는 서비스
-    public BoardResponse listOneByBoardType(long id, String boardType) {
-        BoardType type = BoardType.fromString(boardType);
-        return switch (type) {
+    public BoardResponse listOneById(long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
+
+        increaseViewCnt(board); // 조회수 증가
+
+        // 댓글 수 및 작성자 글 수 가져오기
+        int commentCnt = commentRepository.countByBoardId(id);
+        int postCntByUser = (int) boardRepository.countByUserUserKey(board.getUser().getUserKey());
+
+        // 게시판 타입에 따라 적절한 응답 생성
+        return switch (board.getBoardType()) {
             case CODING -> {
-                CodingBoard codingBoard = codingBoardRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
-                increaseViewCnt(codingBoard);   // 조회수 증가 로직 실행
-                int commentCnt = commentRepository.countByBoardId(id);  // 댓글수 불러오기
-                yield BoardResponse.ofOneCodingPost(codingBoard, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());  // 반환 값을 Response 로 지정
+                CodingBoard codingBoard = (CodingBoard) board;
+                yield BoardResponse.ofOneCodingPost(codingBoard, postCntByUser, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());
             }
             case COURSE -> {
-                CourseBoard courseBoard = courseBoardRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
-                increaseViewCnt(courseBoard);
-                int commentCnt = commentRepository.countByBoardId(id);
-                yield BoardResponse.ofOneCoursePost(courseBoard, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
+                CourseBoard courseBoard = (CourseBoard) board;
+                yield BoardResponse.ofOneCoursePost(courseBoard, postCntByUser, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
             }
             case STUDY -> {
-                StudyBoard studyBoard = studyBoardRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
-                increaseViewCnt(studyBoard);
-                int commentCnt = commentRepository.countByBoardId(id);
-                yield BoardResponse.ofOneStudyPost(studyBoard, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
+                StudyBoard studyBoard = (StudyBoard) board;
+                yield BoardResponse.ofOneStudyPost(studyBoard, postCntByUser, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
             }
             case TEAM -> {
-                TeamBoard teamBoard = teamBoardRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
-                increaseViewCnt(teamBoard);
-                int commentCnt = commentRepository.countByBoardId(id);
-                yield BoardResponse.ofOneTeamPost(teamBoard, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+                TeamBoard teamBoard = (TeamBoard) board;
+                yield BoardResponse.ofOneTeamPost(teamBoard, commentCnt, postCntByUser, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
     }
@@ -379,6 +393,7 @@ public class CommunityService {
         }
     }
 
+    // 댓글 삭제 구현
     public Boolean deleteComment(String authorizationHeader, Long id) {
         try {
             String token = authorizationHeader.replace("Bearer ", "");
@@ -405,6 +420,7 @@ public class CommunityService {
         }
     }
 
+    // 토글방법 좋아요 싫어요 클릭
     public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
@@ -440,6 +456,7 @@ public class CommunityService {
         boardRepository.save(board);
     }
 
+    // 사용자 좋아요 싫어요 클릭시 확인 Status 구현
     public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
@@ -451,5 +468,31 @@ public class CommunityService {
         int dislikeCnt = board.getDislikeCnt();
 
         return new BoardReactionResponse(userReaction, likeCnt, dislikeCnt);
+    }
+
+    // Top Writer 10명 사이드바 구현 JPQL 사용하여 복합 쿼리 생성 list 0 번에유저, 1번에 글작성 횟수
+    public List<BoardResponse> getTopWriterBoard() {
+        // Pageable 사용해 0페이지 10개 제한 (10명)
+        Pageable topTen = PageRequest.of(0, 10);
+        // Repository JPQL 결과 반환후에 List 안에 결과 할당 (닉네임, 글 생성 갯수)
+        List<Object[]> results = boardRepository.findTopUsersByPostCount(topTen);
+
+        return results.stream()
+                .map(result -> BoardResponse.ofTopWriterBoard((String) result[0], ((Long) result[1]).intValue()))
+                .collect(Collectors.toList());
+    }
+
+    public List<BoardResponse> getWeeklyPopularPost() {
+        Pageable topFive = PageRequest.of(0, 5);
+
+        // 저번주 월요일과 일요일 LocalDateTime 으로 변환
+        LocalDateTime startDate = WeeklyTimeCalculator.getStartOfLastWeek();
+        LocalDateTime endDate = WeeklyTimeCalculator.getEndOfLastWeek();
+
+        List<Object[]> results = boardRepository.findWeeklyPopularPosts(startDate, endDate, topFive);
+
+        return results.stream()
+                .map(result -> BoardResponse.ofWeeklyPopularPost((Board) result[0], (String) result[1]))
+                .collect(Collectors.toList());
     }
 }

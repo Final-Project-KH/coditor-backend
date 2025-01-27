@@ -18,12 +18,14 @@ public class BoardResponse {
     private String title;
     private String content;
     private String imgUrl;
+    private BoardType boardType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int viewCnt;
     private int commentCnt;
     private int likeCnt;
     private int dislikeCnt;
+    private long postCnt;
     private Status status;
     private List<String> language;
     private List<String> course;
@@ -34,14 +36,16 @@ public class BoardResponse {
     private List<CommentResponse> comments;
 
     // 내정보에서 내가 쓴 글을 확인 하기 위한 매핑
-//    public static BoardResponse ofMyPost(Board board) {
-//        return BoardResponse.builder()
-//                .boardId(board.getId())
-//                .title(board.getTitle())
-//                .content(board.getContent())
-//                .createdAt(board.getCreatedAt())
-//                .build();
-//    }
+    public static BoardResponse ofMyPost(Board board) {
+        return BoardResponse.builder()
+                .boardId(board.getId())
+                .name(board.getUser().getNickname())
+                .title(board.getTitle())
+                .content(board.getContent())
+                .createdAt(board.getCreatedAt())
+                .updatedAt(board.getUpdatedAt())
+                .build();
+    }
 
     // 코딩질문 게시판 전체 보여주는 매핑
     public static BoardResponse ofAllCodingBoard(CodingBoard codingBoard, int commentCnt, int likeCnt, int dislikeCnt) {
@@ -114,7 +118,7 @@ public class BoardResponse {
                 .build();
     }
 
-    public static BoardResponse ofOneCodingPost(CodingBoard codingBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneCodingPost(CodingBoard codingBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(codingBoard.getId())
                 .name(codingBoard.getUser().getNickname())
@@ -128,11 +132,12 @@ public class BoardResponse {
                 .viewCnt(codingBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneCoursePost(CourseBoard courseBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneCoursePost(CourseBoard courseBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(courseBoard.getId())
                 .name(courseBoard.getUser().getNickname())
@@ -145,11 +150,12 @@ public class BoardResponse {
                 .viewCnt(courseBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneStudyPost(StudyBoard studyBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneStudyPost(StudyBoard studyBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(studyBoard.getId())
                 .name(studyBoard.getUser().getNickname())
@@ -163,11 +169,12 @@ public class BoardResponse {
                 .viewCnt(studyBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneTeamPost(TeamBoard teamBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneTeamPost(TeamBoard teamBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(teamBoard.getId())
                 .name(teamBoard.getUser().getNickname())
@@ -181,7 +188,23 @@ public class BoardResponse {
                 .viewCnt(teamBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
+                .build();
+    }
+
+    public static BoardResponse ofTopWriterBoard(String nickname, long postCntByUser) {
+        return BoardResponse.builder()
+                .name(nickname)
+                .postCnt(postCntByUser)
+                .build();
+    }
+
+    public static BoardResponse ofWeeklyPopularPost(Board board, String nickname) {
+        return BoardResponse.builder()
+                .boardId(board.getId())
+                .title(board.getTitle())
+                .name(nickname)
                 .build();
     }
 }

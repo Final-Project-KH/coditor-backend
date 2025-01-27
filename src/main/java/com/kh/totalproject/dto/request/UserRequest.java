@@ -23,12 +23,20 @@ public class UserRequest {
     private Integer otp;
 
     // User 저장 시 password 는 암호화하여 데이터베이스 저장
-    public User toEntity(PasswordEncoder passwordEncoder){
+    public User toEntity(PasswordEncoder passwordEncoder) {
         return User.builder()
                 .userId(userId)
                 .password(passwordEncoder.encode(password))
                 .email(email)
                 .nickname(nickname)
+                .build();
+    }
+
+    public User toModifyProfile(User existingData) {
+        return User.builder()
+                .userKey(existingData.getUserKey())
+                .nickname(nickname != null ? nickname : existingData.getNickname())
+                .profileUrl(profileUrl != null ? profileUrl : existingData.getProfileUrl())
                 .build();
     }
 }
