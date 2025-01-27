@@ -1,7 +1,7 @@
 package com.kh.totalproject.entity;
 
+import com.kh.totalproject.constant.BoardType;
 import com.kh.totalproject.constant.Status;
-import com.kh.totalproject.constant.Team;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -39,11 +39,12 @@ public class TeamBoard extends Board {
     }
 
     @Builder
-    TeamBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
+    public TeamBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
               LocalDateTime updatedAt, Status status, List<String> team) {
         super(boardId, title, content, imgUrl, createdAt, updatedAt);
         this.status = status;
         this.team = team;
         this.setUser(user);
+        this.setBoardType(BoardType.TEAM);
     }
 }

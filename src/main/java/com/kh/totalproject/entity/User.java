@@ -23,6 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,15 +63,38 @@ public class User {
 
     // 게시판 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Board> boards = new ArrayList<>();
 
     // 댓글 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
     // 게시글 반응 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<BoardReaction> boardReactions = new ArrayList<>();
+
+    // 신고 게시판 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReportBoard> reportBoards  = new ArrayList<>();
+
+    // 신고 게시판에 해당하는 댓글 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReportComment> reportComments = new ArrayList<>();
+
+    // 건의사항 게시판 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SuggestionBoard> suggestionBoards = new ArrayList<>();
+
+    // 건의사항 게시판에 해당하는 댓글 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SuggestionComment> suggestionComments = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

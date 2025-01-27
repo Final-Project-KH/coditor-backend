@@ -1,7 +1,6 @@
 package com.kh.totalproject.entity;
 
 import com.kh.totalproject.constant.*;
-import com.kh.totalproject.repository.CommentRepository;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +35,9 @@ public class Board {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    private BoardType boardType;
+
     // 매개변수가 포함된 생성자는 @NoArgs 어노테이션으로 처리가 불가능 하므로 매개변수가 있는 생성자 명시
     public Board(Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = boardId;
@@ -63,6 +65,9 @@ public class Board {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_key", nullable = false,  referencedColumnName = "user_key")  // FK 컬럼 지정
     private User user;
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReportBoard> reportBoards = new ArrayList<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
