@@ -58,6 +58,8 @@ public class SecurityConfig {
 
                                 "/community/list/one",
                                 "/community/list/comment",
+                                "/community/topWriter",
+                                "/community/weeklyPopularPost",
 
                                 "/community/new/post", // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
                                 "/callback/**" // 임시

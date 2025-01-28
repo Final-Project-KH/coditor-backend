@@ -1,7 +1,7 @@
 package com.kh.totalproject.entity;
 
+import com.kh.totalproject.constant.BoardType;
 import com.kh.totalproject.constant.Status;
-import com.kh.totalproject.constant.Study;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -46,5 +46,6 @@ public class StudyBoard extends Board {
         this.status = status;
         this.study = study;
         this.setUser(user);
+        this.setBoardType(BoardType.STUDY);
     }
 }

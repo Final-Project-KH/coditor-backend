@@ -1,5 +1,6 @@
 package com.kh.totalproject.entity;
 
+import com.kh.totalproject.constant.BoardType;
 import com.kh.totalproject.constant.Status;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
@@ -28,7 +29,6 @@ public class CodingBoard extends Board {
     @Column(columnDefinition = "json")
     private List<String> language;
 
-
     @PrePersist
     private void defaultValues() {
         if (status == null) {
@@ -48,5 +48,6 @@ public class CodingBoard extends Board {
         this.status = status;
         this.language = language;
         this.setUser(user);
+        this.setBoardType(BoardType.CODING);
     }
 }
