@@ -36,7 +36,7 @@ out/
 ### VS Code ###
 .vscode/
 
-# Ignore ...env file
+# Ignore .env file
 .env
 
 ./src/resources/firebase-service-account.json
