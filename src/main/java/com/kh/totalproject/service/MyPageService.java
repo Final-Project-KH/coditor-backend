@@ -189,18 +189,32 @@ public class MyPageService {
             // Access 토큰에서 id 추출
             Long userId = jwtUtil.extractUserId(token);
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
-            ReportBoard reportBoard = reportRepository.findById(reportRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재 하지 않습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다"));
+
+            // reportId와 boardId로 기존 레코드를 찾아 수정
+            ReportBoard reportBoard = reportRepository.findByBoardIdAndReportId(reportRequest.getBoardId(), reportRequest.getReportId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
+
+            // 수정 권한 체크
             if (!reportBoard.getUser().getUserKey().equals(user.getUserKey())) {
                 throw new AccessDeniedException("당신은 이 글에 수정 권한이 없습니다.");
             }
+
+            // 수정할 데이터를 기존 데이터에 반영하여 업데이트
             ReportBoard updatedBoard = reportRequest.toModifyReportPost(reportBoard);
+
+            // 기존 레코드를 수정하기 전에 업데이트된 report 의 ID가 올바른지 확인
+            if (updatedBoard.getId() == null) {
+                updatedBoard.setId(reportBoard.getId()); // 기존 ID를 설정
+            }
+
+            // 기존 레코드를 수정
             reportRepository.save(updatedBoard);
+
+            return true;
         } catch (AccessDeniedException e) {
             return false;
         }
-        return true;
     }
 
     public Boolean modifyMySuggestion(String authorizationHeader, SuggestRequest suggestRequest) {

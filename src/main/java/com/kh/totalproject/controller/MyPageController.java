@@ -83,15 +83,15 @@ public class MyPageController {
         return ResponseEntity.ok(myPageService.mySuggestionPost(authorizationHeader, id));
     }
 
-    @GetMapping("/modify/reportPort")
+    @PutMapping("/modify/reportPost")
     public ResponseEntity<Boolean> modifyMyReport(@RequestHeader("Authorization") String authorizationHeader,
                                                   @RequestBody ReportRequest reportRequest) {
         return ResponseEntity.ok(myPageService.modifyMyReport(authorizationHeader, reportRequest));
     }
 
-    @GetMapping("/modify/suggestionPort")
+    @PutMapping("/modify/suggestionPost")
     public ResponseEntity<Boolean> modifyMySuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                      @RequestParam SuggestRequest suggestRequest) {
+                                                      @RequestBody SuggestRequest suggestRequest) {
         return ResponseEntity.ok(myPageService.modifyMySuggestion(authorizationHeader, suggestRequest));
     }
 }

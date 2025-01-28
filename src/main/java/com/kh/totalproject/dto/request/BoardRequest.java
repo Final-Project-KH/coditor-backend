@@ -77,6 +77,7 @@ public class BoardRequest {
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .status(status != null ? status : existingData.getStatus())
                 .language(language != null ? language : existingData.getLanguage())
+                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 
@@ -88,6 +89,7 @@ public class BoardRequest {
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .course(course != null ? course : existingData.getCourse())
+                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 
@@ -100,6 +102,7 @@ public class BoardRequest {
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .status(status != null ? status : existingData.getStatus())
                 .study(study != null ? study : existingData.getStudy())
+                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 
@@ -112,6 +115,7 @@ public class BoardRequest {
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .status(status != null ? status : existingData.getStatus())
                 .team(team != null ? team : existingData.getTeam())
+                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 }
