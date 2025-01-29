@@ -335,7 +335,7 @@ public class CommunityService {
     }
 
     // 게시글 접근시 게시글내 해당하는 댓글도 같이 통신
-    public Page<CommentResponse> listComment(int page, int size, String sortBy, String order) {
+    public Page<CommentResponse> listComment(Long boardId, int page, int size, String sortBy, String order) {
         // 정렬시 기본값 설정, 페이지에 처음 접근할때
         if (sortBy == null || sortBy.isEmpty()) {
             sortBy = "createdAt";  // 기본적으로 최신순
@@ -345,7 +345,7 @@ public class CommunityService {
         }
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
         Pageable pageable = PageRequest.of(page - 1, size, sort);
-        Page<Comment> comments = commentRepository.findAll(pageable);
+        Page<Comment> comments = commentRepository.findByBoardId(boardId, pageable);
         return comments.map(CommentResponse::ofAllComment);
     }
     

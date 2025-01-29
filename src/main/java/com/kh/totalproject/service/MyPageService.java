@@ -42,7 +42,7 @@ public class MyPageService {
         Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
-        return UserResponse.ofAll(user);
+        return UserResponse.ofMyProfile(user);
     }
 
     // 내 정보 수정
@@ -181,6 +181,7 @@ public class MyPageService {
         return SuggestResponse.ofOneSuggestionPost(suggestionBoard);
     }
 
+    // 내 신고 글 수정 메서드
     public Boolean modifyMyReport(String authorizationHeader, ReportRequest reportRequest) {
         try {
             String token = authorizationHeader.replace("Bearer ", "");
@@ -217,6 +218,7 @@ public class MyPageService {
         }
     }
 
+    // 내 건의사항 글 수정
     public Boolean modifyMySuggestion(String authorizationHeader, SuggestRequest suggestRequest) {
         try {
             String token = authorizationHeader.replace("Bearer ", "");
@@ -233,6 +235,48 @@ public class MyPageService {
             }
             SuggestionBoard updatedBoard = suggestRequest.toModifySuggestionPost(suggestionBoard);
             suggestionRepository.save(updatedBoard);
+        } catch (AccessDeniedException e) {
+            return false;
+        }
+        return true;
+    }
+
+    // 내 신고 글 삭제
+    public Boolean deleteMyReportPost(String authorizationHeader, Long reportId) {
+        try {
+            String token = authorizationHeader.replace("Bearer ", "");
+            jwtUtil.getAuthentication(token);
+            Long userId = jwtUtil.extractUserId(token);
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
+            ReportBoard reportBoard = reportRepository.findById(reportId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+            if (!reportBoard.getUser().getUserKey().equals(user.getUserKey())){
+                throw new AccessDeniedException("당신은 이 글을 삭제 할 권한이 없습니다.");
+            }
+            reportRepository.deleteById(reportId);
+        } catch (AccessDeniedException e) {
+            return false;
+        }
+        return true;
+    }
+
+    // 내 건의사항 글 삭제
+    public Boolean deleteMySuggestionPost(String authorizationHeader, Long suggestionId) {
+        try {
+            String token = authorizationHeader.replace("Bearer ", "");
+            jwtUtil.getAuthentication(token);
+            Long userId = jwtUtil.extractUserId(token);
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+            if (!suggestionBoard.getUser().getUserKey().equals(user.getUserKey())) {
+                throw new AccessDeniedException("당신은 이 글을 삭제 할 권한이 없습니다.");
+            }
+            suggestionRepository.deleteById(suggestionId);
         } catch (AccessDeniedException e) {
             return false;
         }
