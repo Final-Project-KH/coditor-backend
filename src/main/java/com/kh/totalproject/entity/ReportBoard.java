@@ -31,6 +31,7 @@ public class ReportBoard {
 
     private String imgUrl;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // 신고글 작성시 드롭다운 메뉴 선택 (예시 : 악성유저, 버그 등등)
     @Type(JsonType.class)
@@ -52,6 +53,12 @@ public class ReportBoard {
         }
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_key", nullable = false,  referencedColumnName = "user_key")  // FK 컬럼 지정
