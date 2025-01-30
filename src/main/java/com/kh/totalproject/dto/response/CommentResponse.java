@@ -1,8 +1,6 @@
 package com.kh.totalproject.dto.response;
 
-import com.kh.totalproject.entity.Board;
 import com.kh.totalproject.entity.Comment;
-import com.kh.totalproject.entity.User;
 import lombok.*;
 
 import java.time.LocalDateTime;

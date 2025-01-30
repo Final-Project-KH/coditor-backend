@@ -31,6 +31,7 @@ public class SuggestionBoard {
 
     private String imgUrl;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // 의견제시글 작성시 드롭바 메뉴 선택 (예시 : 디자인, 기능 개선)
     @Type(JsonType.class)
@@ -49,6 +50,13 @@ public class SuggestionBoard {
 
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
         }
     }
 

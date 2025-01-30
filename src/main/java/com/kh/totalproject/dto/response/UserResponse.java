@@ -23,7 +23,7 @@ public class UserResponse {
     private String profileUrl;
 
     // 내정보 보기 읽기전용 OfAll
-    public static UserResponse ofAll(User user) {
+    public static UserResponse ofMyProfile(User user) {
         return UserResponse.builder()
                 .userKey(user.getUserKey())
                 .userId(user.getUserId())
@@ -40,7 +40,6 @@ public class UserResponse {
     public static UserResponse ofUserId(User user) {
         return UserResponse.builder()
                 .userId(user.getUserId())
-                .registeredAt(user.getRegisteredAt())
                 .email(user.getEmail())
                 .build();
     }
