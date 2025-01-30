@@ -44,6 +44,9 @@ public class BoardResponse {
                 .content(board.getContent())
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
+                .boardType(board.getBoardType())
+                .viewCnt(board.getViewCnt())
+                .commentCnt(board.getCommentCnt())
                 .build();
     }
 

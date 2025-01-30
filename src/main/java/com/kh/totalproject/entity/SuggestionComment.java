@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ToString(exclude = {"suggestionBoard", "user"})    // 순환 참조 방지
-@Table(name = "report_comment")
+@Table(name = "suggestion_comment")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

@@ -68,11 +68,12 @@ public class CommunityController {
 
     // 게시글 내 댓글 확인
     @GetMapping("/list/comment")
-    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam(defaultValue = "1") int page,
+    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam Long boardId,
+                                                      @RequestParam(defaultValue = "1") int page,
                                                       @RequestParam(defaultValue = "10") int size,
                                                       @RequestParam(defaultValue = "createdAt") String sortBy,
                                                       @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(communityService.listComment(page, size, sortBy, order));
+        return ResponseEntity.ok(communityService.listComment(boardId, page, size, sortBy, order));
     }
 
     // 댓글 생성

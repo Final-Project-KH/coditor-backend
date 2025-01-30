@@ -8,8 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +17,6 @@ public class CommentRequest {
     private Long commentId;
     private String name;
     private String content;
-    private LocalDateTime updatedAt;
 
     // 댓글 작성시 필요한 빌더 패턴
     public Comment toAddComment(User user, Board board) {
@@ -37,6 +34,7 @@ public class CommentRequest {
                 .content(this.content != null ? this.content : existingData.getContent())
                 .user(user)
                 .board(board)
+                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 }

@@ -59,7 +59,9 @@ public class Board {
     // 게시글 업데이트시 작동
     @PreUpdate
     public void updatedTime() {
-        updatedAt = LocalDateTime.now();
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
