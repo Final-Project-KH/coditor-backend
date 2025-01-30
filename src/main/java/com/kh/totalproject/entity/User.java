@@ -42,7 +42,7 @@ public class User {
     @Size(min = 5, max = 50, message = "이메일은 5자 이상, 50자 이하(영어 기준)")
     private String email;
 
-    @Column(nullable = true, length = 100)
+    @Column(nullable = true, length = 200)
     private String profileUrl;
     
     // 암호화 하기 때문에 max 값 255로 설정
