@@ -3,7 +3,6 @@ package com.kh.totalproject.service;
 import com.kh.totalproject.dto.MailBody;
 import com.kh.totalproject.dto.request.LoginRequest;
 import com.kh.totalproject.dto.request.AdminRequest;
-import com.kh.totalproject.dto.request.TokenRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
@@ -72,6 +71,12 @@ public class AuthService {
         throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
+    public Boolean autoLogIn (String accessToken) {
+        String token = accessToken.replace("Bearer ", "");
+        Long userKey = jwtUtil.extractUserId(token);
+
+        return userRepository.findByUserKey(userKey).isPresent();
+    }
     // Access Token 만료시 토큰 재발행
     public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
         // 매개변수로 들어온 Refresh Token 을 DB 에서의 존재 유무 확인
@@ -79,13 +84,11 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("유효한 Refresh 토큰이 아닙니다."));
 
         User user = token.getUser();
-        log.info("토큰을 유저에서 받음 : {}", user);
         // 사용자가 매개변수로 들어온 Refresh Token 을 가지고 있는지 유무 체크 / 없으면 기존 Refresh Token 을 DB 에서 삭제
         if (!token.getRefreshToken().equals(refreshToken)) {
             tokenRepository.deleteByUserKey(user.getUserKey());
             throw new HiJackingException("유효한 Refresh Token 이 아닙니다 해당 계정의 Refresh Token 삭제.");
         }
-
         // RequestTokenDto 에서 추출한 refreshToken 의 유효성 검사
         Authentication authentication = jwtUtil.getAuthentication(refreshToken);
         log.info("리프레시 토큰 유효성 검사 : {}", authentication);
@@ -93,7 +96,7 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(authentication, response);
         log.info("유효성 검사후 엑세스 토큰 생성 : {}", accessToken);
         token.setRefreshToken(tokenResponse.getRefreshToken());
-        tokenRepository.save(token);
+        tokenRepository.save(token); // 성능 최적화 필요
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -261,6 +264,6 @@ public class AuthService {
     // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
     public UserResponse saveAdmin(AdminRequest requestDto){
         User user = requestDto.toEntity(passwordEncoder);
-        return UserResponse.ofAll(userRepository.save(user));
+        return UserResponse.ofMyProfile(userRepository.save(user));
     }
 }

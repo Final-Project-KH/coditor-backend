@@ -7,6 +7,7 @@ import com.kh.totalproject.dto.request.TokenRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
+import com.kh.totalproject.entity.Token;
 import com.kh.totalproject.exception.HiJackingException;
 import com.kh.totalproject.service.AuthService;
 import com.kh.totalproject.service.GoogleService;
@@ -31,6 +32,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> signIn(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
         return ResponseEntity.ok(authService.logIn(loginRequest, response));
+    }
+
+    @PostMapping("/autologin")
+    public ResponseEntity<Boolean> autoLogIn(@RequestHeader("Authorization") String accessToken){
+        return ResponseEntity.ok(authService.autoLogIn(accessToken));
     }
 
     // 엑세스 토큰 만료시 요청, 응답

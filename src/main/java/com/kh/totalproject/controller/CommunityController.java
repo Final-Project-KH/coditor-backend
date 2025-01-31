@@ -14,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -53,23 +55,25 @@ public class CommunityController {
                                                 @RequestParam(required = false) String sortBy,
                                                 @RequestParam(required = false) String order,
                                                 @RequestParam(required = false) String status,
-                                                @RequestParam(required = false) String enumFilter) {
-        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter));
+                                                @RequestParam(required = false) String enumFilter,
+                                                @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter, search));
     }
 
     // 게시판별 단일 게시글 조회시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @GetMapping("/list/one")
-    ResponseEntity<BoardResponse> listOne(@RequestParam long id, @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.listOneByBoardType(id, boardType));
+    ResponseEntity<BoardResponse> listOne(@RequestParam long id) {
+        return ResponseEntity.ok(communityService.listOneById(id));
     }
 
     // 게시글 내 댓글 확인
     @GetMapping("/list/comment")
-    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam(defaultValue = "1") int page,
+    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam Long boardId,
+                                                      @RequestParam(defaultValue = "1") int page,
                                                       @RequestParam(defaultValue = "10") int size,
                                                       @RequestParam(defaultValue = "createdAt") String sortBy,
                                                       @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(communityService.listComment(page, size, sortBy, order));
+        return ResponseEntity.ok(communityService.listComment(boardId, page, size, sortBy, order));
     }
 
     // 댓글 생성
@@ -93,6 +97,7 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.deleteComment(authorizationHeader, id));
     }
 
+    // 게시글 내 좋아요 싫어요 클릭시 요청 / 응답
     @PostMapping("/reaction/voting")
     public ResponseEntity<?> toggleReaction(@RequestParam Long boardId,
                                             @RequestParam Long userId,
@@ -101,10 +106,23 @@ public class CommunityController {
         return ResponseEntity.ok().build();
     }
 
+    // 유저별 좋아요 싫어요 상태
     @GetMapping("/reaction/status")
     public ResponseEntity<BoardReactionResponse> getReactionStatus(@RequestParam Long boardId,
                                                                    @RequestParam Long userId) {
         BoardReactionResponse reactionStatus = communityService.getReactionStatus(boardId, userId);
         return ResponseEntity.ok(reactionStatus);
+    }
+
+    // 게시판에서 TopWriter 요청 / 응답
+    @GetMapping("/topWriter")
+    public ResponseEntity<List<BoardResponse>> getTopWriterBoard() {
+        return ResponseEntity.ok(communityService.getTopWriterBoard());
+    }
+
+    // 주간 인기글 요청 / 응답
+    @GetMapping("/weeklyPopularPost")
+    public ResponseEntity<List<BoardResponse>> weeklyPopularPost() {
+        return ResponseEntity.ok(communityService.getWeeklyPopularPost());
     }
 }
