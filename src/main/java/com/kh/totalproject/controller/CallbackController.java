@@ -25,6 +25,8 @@ public class CallbackController {
                 return ResponseEntity.ok().build();
             case CLIENT_NOT_FOUND:
                 return ResponseEntity.notFound().build();
+            case GONE:
+                return ResponseEntity.status(410).build();
             default:
                 return ResponseEntity.internalServerError().build();
         }
