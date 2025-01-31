@@ -1,65 +1,65 @@
-/* 관리자 전용 페이지
-*  유저, 게시글 에 관한 CRUD 중 Read 과 Delete 를 가능하게 하며
-*  신고 글 과 건의사항 글에 대한 답변 가능 */
-
-package com.kh.totalproject.controller;
-
-import com.kh.totalproject.dto.request.ReportCommentRequest;
-import com.kh.totalproject.dto.response.ReportCommentResponse;
-import com.kh.totalproject.dto.response.ReportResponse;
-import com.kh.totalproject.dto.response.SuggestResponse;
-import com.kh.totalproject.dto.response.UserResponse;
-import com.kh.totalproject.service.AdminService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-
-@Slf4j
-@RequiredArgsConstructor
-@RestController
-@RequestMapping("/admin")
-public class AdminController {
-    private final AdminService adminService;
-
-    @GetMapping("/validate/admin")
-    public ResponseEntity<Boolean> checkIfAdmin(@RequestHeader("Authorization") String authorizationHeader) {
-        return ResponseEntity.ok(adminService.adminChecker(authorizationHeader));
-    }
-
-    // 모든 유저를 페이지네이션 목록 요청 / 응답
-    @GetMapping("/list/users")
-    public ResponseEntity<Page<UserResponse>> listAllUserInfo(@RequestHeader("Authorization") String authorizationHeader,
-                                                              @RequestParam(defaultValue = "1") int page,
-                                                              @RequestParam(defaultValue = "10") int size,
-                                                              @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                              @RequestParam(defaultValue = "DESC") String order,
-                                                              @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(adminService.listAllUserInfo(authorizationHeader, page, size, sortBy, order, search));
-    }
-
-    // 유저가 작성한 신고 글 목록 요청 / 응답
-    @GetMapping("/list/report")
-    public ResponseEntity<Page<ReportResponse>> listAllReport(@RequestHeader("Authorization") String authorizationHeader,
-                                                              @RequestParam(defaultValue = "1") int page,
-                                                              @RequestParam(defaultValue = "10") int size,
-                                                              @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                              @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(adminService.listReportPost(authorizationHeader, page, size, sortBy, order));
-    }
-
-    // 유저가 작성한 건의사항 글 목록 요청 / 응답
-    @GetMapping("/list/report")
-    public ResponseEntity<Page<SuggestResponse>> listAllSuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                                   @RequestParam(defaultValue = "1") int page,
-                                                                   @RequestParam(defaultValue = "10") int size,
-                                                                   @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                                   @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(adminService.listSuggestionPost(authorizationHeader, page, size, sortBy, order));
-    }
-
+///* 관리자 전용 페이지
+//*  유저, 게시글 에 관한 CRUD 중 Read 과 Delete 를 가능하게 하며
+//*  신고 글 과 건의사항 글에 대한 답변 가능 */
+//
+//package com.kh.totalproject.controller;
+//
+//import com.kh.totalproject.dto.request.ReportCommentRequest;
+//import com.kh.totalproject.dto.response.ReportCommentResponse;
+//import com.kh.totalproject.dto.response.ReportResponse;
+//import com.kh.totalproject.dto.response.SuggestResponse;
+//import com.kh.totalproject.dto.response.UserResponse;
+//import com.kh.totalproject.service.AdminService;
+//import lombok.RequiredArgsConstructor;
+//import lombok.extern.slf4j.Slf4j;
+//import org.springframework.data.domain.Page;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.web.bind.annotation.*;
+//
+//
+//@Slf4j
+//@RequiredArgsConstructor
+//@RestController
+//@RequestMapping("/admin")
+//public class AdminController {
+//    private final AdminService adminService;
+//
+//    @GetMapping("/validate/admin")
+//    public ResponseEntity<Boolean> checkIfAdmin(@RequestHeader("Authorization") String authorizationHeader) {
+//        return ResponseEntity.ok(adminService.adminChecker(authorizationHeader));
+//    }
+//
+//    // 모든 유저를 페이지네이션 목록 요청 / 응답
+//    @GetMapping("/list/users")
+//    public ResponseEntity<Page<UserResponse>> listAllUserInfo(@RequestHeader("Authorization") String authorizationHeader,
+//                                                              @RequestParam(defaultValue = "1") int page,
+//                                                              @RequestParam(defaultValue = "10") int size,
+//                                                              @RequestParam(defaultValue = "createdAt") String sortBy,
+//                                                              @RequestParam(defaultValue = "DESC") String order,
+//                                                              @RequestParam(required = false) String search) {
+//        return ResponseEntity.ok(adminService.listAllUserInfo(authorizationHeader, page, size, sortBy, order, search));
+//    }
+//
+//    // 유저가 작성한 신고 글 목록 요청 / 응답
+//    @GetMapping("/list/report")
+//    public ResponseEntity<Page<ReportResponse>> listAllReport(@RequestHeader("Authorization") String authorizationHeader,
+//                                                              @RequestParam(defaultValue = "1") int page,
+//                                                              @RequestParam(defaultValue = "10") int size,
+//                                                              @RequestParam(defaultValue = "createdAt") String sortBy,
+//                                                              @RequestParam(defaultValue = "DESC") String order) {
+//        return ResponseEntity.ok(adminService.listReportPost(authorizationHeader, page, size, sortBy, order));
+//    }
+//
+//    // 유저가 작성한 건의사항 글 목록 요청 / 응답
+//    @GetMapping("/list/report")
+//    public ResponseEntity<Page<SuggestResponse>> listAllSuggestion(@RequestHeader("Authorization") String authorizationHeader,
+//                                                                   @RequestParam(defaultValue = "1") int page,
+//                                                                   @RequestParam(defaultValue = "10") int size,
+//                                                                   @RequestParam(defaultValue = "createdAt") String sortBy,
+//                                                                   @RequestParam(defaultValue = "DESC") String order) {
+//        return ResponseEntity.ok(adminService.listSuggestionPost(authorizationHeader, page, size, sortBy, order));
+//    }
+//
 //    // 유저가 작성한 신고 글 삭제
 //    @DeleteMapping("delete/report")
 //    public ResponseEntity<Boolean> deleteReport(@RequestHeader("Authorization") String authorizationHeader,
@@ -132,4 +132,4 @@ public class AdminController {
 //                                                @RequestParam Long announcementId) {
 //        return ResponseEntity.ok(adminService.deleteAnnouncement(authorizationHeader, announcementId));
 //    }
-}
+//}
