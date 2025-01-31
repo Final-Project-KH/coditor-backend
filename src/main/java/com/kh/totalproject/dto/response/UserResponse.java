@@ -25,7 +25,6 @@ public class UserResponse {
     // 내정보 보기 읽기전용 OfAll
     public static UserResponse ofMyProfile(User user) {
         return UserResponse.builder()
-                .userKey(user.getUserKey())
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
@@ -41,6 +40,18 @@ public class UserResponse {
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
+                .build();
+    }
+
+    // 관리자가 모든 유저를 체크 할 수 있는 빌더처리
+    public static UserResponse ofAllUserInfo(User user) {
+        return UserResponse.builder()
+                .userKey(user.getUserKey())
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .registeredAt(user.getRegisteredAt())
+                .profileUrl(user.getProfileUrl())
                 .build();
     }
 }

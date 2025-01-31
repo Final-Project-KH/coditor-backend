@@ -1,5 +1,6 @@
 package com.kh.totalproject.dto.response;
 
+import com.kh.totalproject.entity.User;
 import lombok.*;
 
 @Getter

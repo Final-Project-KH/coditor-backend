@@ -263,7 +263,7 @@ public class AuthService {
 
     // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
     public UserResponse saveAdmin(AdminRequest requestDto){
-        User user = requestDto.toEntity(passwordEncoder);
+        User user = requestDto.toJoinAsAdmin(passwordEncoder);
         return UserResponse.ofMyProfile(userRepository.save(user));
     }
 }
