@@ -60,76 +60,76 @@ public class AdminController {
         return ResponseEntity.ok(adminService.listSuggestionPost(authorizationHeader, page, size, sortBy, order));
     }
 
-    // 유저가 작성한 신고 글 삭제
-    @DeleteMapping("delete/report")
-    public ResponseEntity<Boolean> deleteReport(@RequestHeader("Authorization") String authorizationHeader,
-                                                @RequestParam Long reportId) {
-        return ResponseEntity.ok(adminService.deleteReport(authorizationHeader, reportId));
-    }
-
-    // 유저가 작성한 건의사항 글 삭제
-    @DeleteMapping("delete/suggestion")
-    public ResponseEntity<Boolean> deleteSuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                    @RequestParam Long suggestionId) {
-        return ResponseEntity.ok(adminService.deleteSuggestion(authorizationHeader, suggestionId));
-    }
-
-    // 유저가 작성한 신고 글 관리자 답변 보기 요청 / 응답
-    @GetMapping("/list/report/comment")
-    public ResponseEntity<ReportCommentResponse> listReportReply(@RequestHeader("Authorization") String authorizationHeader) {
-        return ResponseEntity.ok(adminService.listReportReply(authorizationHeader));
-    }
-
-    // 유저가 작성한 건의사항 글 관리자 답변 보기 요청 / 응답
-    @GetMapping("/list/suggestion/comment")
-    public ResponseEntity<ReportCommentResponse> listSuggestionReply(@RequestHeader("Authorization") String authorizationHeader) {
-        return ResponseEntity.ok(adminService.listSuggestionReply(authorizationHeader));
-    }
-
-    // 신고 글에 대한 답변 요청 / 응답
-    @PostMapping("/reply/report")
-    public ResponseEntity<ReportCommentRequest> replyReport(@RequestHeader("Authorization") String authorizationHeader,
-                                                            @RequestParam Long reportId) {
-        return ResponseEntity.ok(adminService.replyReport(authorizationHeader, reportId));
-    }
-
-    // 건의사항 글에 대한 답변 요청 / 응답
-    @PostMapping("/reply/suggestion")
-    public ResponseEntity<ReportCommentRequest> replySuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                                @RequestParam Long suggestionId) {
-        return ResponseEntity.ok(adminService.replySuggestion(authorizationHeader, suggestionId));
-    }
-
-    // 신고글에 대한 처리 글 삭제 기능
-    @DeleteMapping("/delete/post")
-    public ResponseEntity<Boolean> deletePost(@RequestHeader("Authorization") String authorizationHeader,
-                                              @RequestParam Long boardId) {
-        return ResponseEntity.ok(adminService.deletePost(authorizationHeader, boardId));
-    }
-
-    // 공지사항 글 작성
-    @GetMapping("/list/announcement")
-    public ResponseEntity<Page<?>> listAnnouncement() {
-        return ResponseEntity.ok(adminService.listAnnouncement());
-    }
-
-    // 공지사항글 작성 (필요한지 필요 없는지 유무 정하면 엔티티 만들어야함)
-    @PostMapping("/new/announcement")
-    public ResponseEntity<?> createAnnouncement(@RequestHeader("Authorization") String authorizationHeader) {
-        return ResponseEntity.ok(adminService.createAnnouncement(authorizationHeader));
-    }
-
-    // 공지사항 글 수정
-    @PutMapping("/modify/announcement")
-    public ResponseEntity<?> modifyAnnouncement(@RequestHeader("Authorization") String authorizationHeader,
-                                                @RequestParam Long announcementId) {
-        return ResponseEntity.ok(adminService.modifyAnnouncement(authorizationHeader, announcementId));
-    }
-
-    // 공지사항 글 삭제
-    @DeleteMapping("/delete/announcement")
-    public ResponseEntity<?> deleteAnnouncement(@RequestHeader("Authorization") String authorizationHeader,
-                                                @RequestParam Long announcementId) {
-        return ResponseEntity.ok(adminService.deleteAnnouncement(authorizationHeader, announcementId));
-    }
+//    // 유저가 작성한 신고 글 삭제
+//    @DeleteMapping("delete/report")
+//    public ResponseEntity<Boolean> deleteReport(@RequestHeader("Authorization") String authorizationHeader,
+//                                                @RequestParam Long reportId) {
+//        return ResponseEntity.ok(adminService.deleteReport(authorizationHeader, reportId));
+//    }
+//
+//    // 유저가 작성한 건의사항 글 삭제
+//    @DeleteMapping("delete/suggestion")
+//    public ResponseEntity<Boolean> deleteSuggestion(@RequestHeader("Authorization") String authorizationHeader,
+//                                                    @RequestParam Long suggestionId) {
+//        return ResponseEntity.ok(adminService.deleteSuggestion(authorizationHeader, suggestionId));
+//    }
+//
+//    // 유저가 작성한 신고 글 관리자 답변 보기 요청 / 응답
+//    @GetMapping("/list/report/comment")
+//    public ResponseEntity<ReportCommentResponse> listReportReply(@RequestHeader("Authorization") String authorizationHeader) {
+//        return ResponseEntity.ok(adminService.listReportReply(authorizationHeader));
+//    }
+//
+//    // 유저가 작성한 건의사항 글 관리자 답변 보기 요청 / 응답
+//    @GetMapping("/list/suggestion/comment")
+//    public ResponseEntity<ReportCommentResponse> listSuggestionReply(@RequestHeader("Authorization") String authorizationHeader) {
+//        return ResponseEntity.ok(adminService.listSuggestionReply(authorizationHeader));
+//    }
+//
+//    // 신고 글에 대한 답변 요청 / 응답
+//    @PostMapping("/reply/report")
+//    public ResponseEntity<ReportCommentRequest> replyReport(@RequestHeader("Authorization") String authorizationHeader,
+//                                                            @RequestParam Long reportId) {
+//        return ResponseEntity.ok(adminService.replyReport(authorizationHeader, reportId));
+//    }
+//
+//    // 건의사항 글에 대한 답변 요청 / 응답
+//    @PostMapping("/reply/suggestion")
+//    public ResponseEntity<ReportCommentRequest> replySuggestion(@RequestHeader("Authorization") String authorizationHeader,
+//                                                                @RequestParam Long suggestionId) {
+//        return ResponseEntity.ok(adminService.replySuggestion(authorizationHeader, suggestionId));
+//    }
+//
+//    // 신고글에 대한 처리 글 삭제 기능
+//    @DeleteMapping("/delete/post")
+//    public ResponseEntity<Boolean> deletePost(@RequestHeader("Authorization") String authorizationHeader,
+//                                              @RequestParam Long boardId) {
+//        return ResponseEntity.ok(adminService.deletePost(authorizationHeader, boardId));
+//    }
+//
+//    // 공지사항 글 작성
+//    @GetMapping("/list/announcement")
+//    public ResponseEntity<Page<?>> listAnnouncement() {
+//        return ResponseEntity.ok(adminService.listAnnouncement());
+//    }
+//
+//    // 공지사항글 작성 (필요한지 필요 없는지 유무 정하면 엔티티 만들어야함)
+//    @PostMapping("/new/announcement")
+//    public ResponseEntity<?> createAnnouncement(@RequestHeader("Authorization") String authorizationHeader) {
+//        return ResponseEntity.ok(adminService.createAnnouncement(authorizationHeader));
+//    }
+//
+//    // 공지사항 글 수정
+//    @PutMapping("/modify/announcement")
+//    public ResponseEntity<?> modifyAnnouncement(@RequestHeader("Authorization") String authorizationHeader,
+//                                                @RequestParam Long announcementId) {
+//        return ResponseEntity.ok(adminService.modifyAnnouncement(authorizationHeader, announcementId));
+//    }
+//
+//    // 공지사항 글 삭제
+//    @DeleteMapping("/delete/announcement")
+//    public ResponseEntity<?> deleteAnnouncement(@RequestHeader("Authorization") String authorizationHeader,
+//                                                @RequestParam Long announcementId) {
+//        return ResponseEntity.ok(adminService.deleteAnnouncement(authorizationHeader, announcementId));
+//    }
 }
