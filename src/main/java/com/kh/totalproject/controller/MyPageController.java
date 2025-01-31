@@ -126,4 +126,8 @@ public class MyPageController {
                                                   @RequestParam("fileName") String fileName) throws IOException {
         return ResponseEntity.ok(firebaseStorageService.uploadFile(authorizationHeader, file, fileName));
     }
+    @PostMapping("/profile/imagedelete")
+    public ResponseEntity<Boolean> deleteMyProfile(@RequestHeader("Authorization") String authorizationHeader) {
+        return ResponseEntity.ok(firebaseStorageService.deleteFile(authorizationHeader));
+    }
 }
