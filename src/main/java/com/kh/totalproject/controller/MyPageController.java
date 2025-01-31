@@ -7,12 +7,16 @@ import com.kh.totalproject.dto.request.ReportRequest;
 import com.kh.totalproject.dto.request.SuggestRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.*;
+import com.kh.totalproject.service.FirebaseStorageService;
 import com.kh.totalproject.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/my")
 public class MyPageController {
     private final MyPageService myPageService;
+    private final FirebaseStorageService firebaseStorageService;
 
     // 내 정보 조회
     @GetMapping("/profile")
@@ -113,5 +118,12 @@ public class MyPageController {
     public ResponseEntity<Boolean> deleteMySuggestion(@RequestHeader("Authorization") String authorizationHeader,
                                                       @RequestParam Long suggestionId) {
         return ResponseEntity.ok(myPageService.deleteMySuggestionPost(authorizationHeader, suggestionId));
+    }
+
+    @PostMapping("/profile/imageupload")
+    public ResponseEntity<String> uploadMyProfile(@RequestHeader("Authorization") String authorizationHeader,
+                                                  @RequestParam("file")MultipartFile file,
+                                                  @RequestParam("fileName") String fileName) throws IOException {
+        return ResponseEntity.ok(firebaseStorageService.uploadFile(authorizationHeader, file, fileName));
     }
 }

@@ -13,12 +13,14 @@ public class TokenResponse {
     private String grantType;
     private String accessToken; // Access Token
     private String refreshToken; // Refresh Token
+    private String profileUrl;
     private boolean isNewUser;  // 신규 사용자 여부 추가
 
-    public static TokenResponse ofAccessToken(TokenResponse tokenresponse) {
+    public static TokenResponse ofAccessToken(TokenResponse tokenresponse, User user) {
         return TokenResponse.builder()
                 .grantType(tokenresponse.getGrantType())
                 .accessToken(tokenresponse.getAccessToken())
+                .profileUrl(user.getProfileUrl())
                 .build();
     }
 }

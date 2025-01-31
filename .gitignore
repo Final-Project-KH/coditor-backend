@@ -36,7 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
-# Ignore .env file
+# Ignore ..env file
 .env
 
-./src/resources/firebase-service-account.json
+### Firebase API Key
+src/main/resources/firebase-service-account.json
