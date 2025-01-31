@@ -6,13 +6,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 public class SecurityUtil {
-//    /**
-//     * 현재 인증된 사용자의 ID를 반환합니다.
-//     * 인증되지 않았거나 사용자 정보를 찾을 수 없는 경우 예외를 던집니다.
-//     *
-//     * @return 인증된 사용자의 ID
-//     * @throws UnauthenticatedException 인증 정보가 없거나 CustomUserDetails 형식이 아닐 때
-//     */
+    /**
+     * 현재 인증된 사용자의 ID를 반환합니다.
+     * 인증되지 않았거나 사용자 정보를 찾을 수 없는 경우 예외를 던집니다.
+     *
+     * @return 인증된 사용자의 ID
+     * @throws UnauthenticatedException 인증 정보가 없거나 CustomUserDetails 형식이 아닐 때
+     */
     public static Long getCurrentUserIdOrThrow() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
