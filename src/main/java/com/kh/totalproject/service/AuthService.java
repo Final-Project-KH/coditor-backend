@@ -65,7 +65,7 @@ public class AuthService {
                     .build();
             token.setUser(user);
             tokenRepository.save(token);
-            return TokenResponse.ofAccessToken(tokenResponse);
+            return TokenResponse.ofAccessToken(tokenResponse, user);
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
         throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
@@ -100,6 +100,7 @@ public class AuthService {
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
+                .profileUrl(user.getProfileUrl())
                 .build();
     }
 
