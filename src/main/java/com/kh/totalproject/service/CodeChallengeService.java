@@ -77,8 +77,8 @@ public class CodeChallengeService {
         // Celery Task 실행 중 치명적 에러 발생
         // 반환 값과 관계 없이 Celery Task는 자동 종료됨
         else if (
-                !result.getSuccess() &&
-                        result.getError() != null
+            !result.getSuccess() &&
+            result.getError() != null
         ) {
             sendSseMessage(
                 jobId,
@@ -94,17 +94,18 @@ public class CodeChallengeService {
         // 테스트 케이스 메시지 전송
         // 반환 값에 따라 Celery Task에서 추가 작업 여부를 판단
         else {
+            Map<String, Object> data = new HashMap<>();
+            data.put("success", result.getSuccess());
+            data.put("runningTime", result.getRunningTime());
+            data.put("memoryUsage", result.getMemoryUsage());
+            data.put("codeSize", result.getCodeSize());
+            data.put("error", result.getError());
+            data.put("detail", result.getDetail());
+
             return sendSseMessage(
                 jobId,
                 emitter,
-                Map.of(
-                    "success", result.getSuccess(),
-                    "runningTime", result.getRunningTime(),
-                    "memoryUsage", result.getMemoryUsage(),
-                    "codeSize", result.getCodeSize(),
-                    "error", result.getError(),
-                    "detail", result.getDetail()
-                ),
+                data,
                 String.valueOf(result.getTestcaseIndex())
             );
         }
