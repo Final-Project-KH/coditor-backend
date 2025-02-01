@@ -11,6 +11,7 @@ import com.kh.totalproject.exception.FlaskResponseIsNotValidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -45,61 +46,68 @@ public class CodeChallengeService {
 
     public SseSendResultStatus sendTestcaseResult(String jobId, TestcaseResult result) {
         SseEmitter emitter = subscriptions.get(jobId);
+
+        // 구독 중인 사용자가 없는 경우
         if (emitter == null) {
             return SseSendResultStatus.CLIENT_NOT_FOUND;
         }
 
-        try {
-            if (
-                result.getSuccess() &&
-                result.getDetail() != null &&
-                result.getDetail().contains("complete")
-            ) {
-                try {
-                    emitter.complete();
-                } catch (IllegalStateException e2) {
-                    // 이미 complete 인 경우 또 complete 되어 발생하는 로그 제거
-                }
-            } else {
-                Map<String, Object> data = new HashMap<>();
-                data.put("success", result.getSuccess());
-                data.put("runningTime", result.getRunningTime());
-                data.put("memoryUsage", result.getMemoryUsage());
-                data.put("codeSize", result.getCodeSize());
-                data.put("error", result.getError());
-                data.put("detail", result.getDetail());
-
-                emitter.send(SseEmitter.event()
-                        .id(String.valueOf(result.getTestcaseIndex()))
-                        .data(data)
-                );
-            }
-        } catch (IOException e) {
-            // 클라이언트와의 SSE 연결이 모종의 이유(이탈, 네트워크 장애)로 끊어져
-            // 메시지를 send 할 수 없는 경우 처리
-            try {
-                emitter.complete();
-            } catch (IllegalStateException e2) {
-                // 이미 complete 인 경우 또 complete 되어 발생하는 로그 제거
-            }
-
-            removeSubscription(jobId);
-            return SseSendResultStatus.GONE;
-        } catch (Exception e) {
-            // 기타 예외 처리
-            log.error("Unexpected error occurred while sending event for jobId: {}", jobId, e);
-
-            try {
-                emitter.complete();
-            } catch (IllegalStateException e2) {
-                // 이미 complete 인 경우 또 complete 되어 발생하는 로그 제거
-            }
-
-            removeSubscription(jobId);
-            return SseSendResultStatus.ERROR;
+        // 사용자의 중단 요청에 대한 처리
+        // 반환 값과 관계 없이 Celery Task는 자동 종료됨
+        else if (
+            result.getSuccess() &&
+            result.getDetail() != null &&
+            result.getDetail().contains("중단")
+        ) {
+            removeSubscriptionAndSetEmitterComplete(jobId);
+            return SseSendResultStatus.SUCCESS;
         }
 
-        return SseSendResultStatus.SUCCESS;
+        // Task 실행 완료 처리
+        // 반환 값과 관계 없이 Celery Task는 자동 종료됨
+        else if (
+            result.getSuccess() &&
+            result.getDetail() != null &&
+            result.getDetail().contains("complete")
+        ) {
+            removeSubscriptionAndSetEmitterComplete(jobId);
+            return SseSendResultStatus.SUCCESS;
+        }
+
+        // Celery Task 실행 중 치명적 에러 발생
+        // 반환 값과 관계 없이 Celery Task는 자동 종료됨
+        else if (
+                !result.getSuccess() &&
+                        result.getError() != null
+        ) {
+            sendSseMessage(
+                jobId,
+                emitter,
+                "error " + result.getError(),
+                null
+            );
+
+            removeSubscriptionAndSetEmitterComplete(jobId);
+            return SseSendResultStatus.SUCCESS;
+        }
+
+        // 테스트 케이스 메시지 전송
+        // 반환 값에 따라 Celery Task에서 추가 작업 여부를 판단
+        else {
+            return sendSseMessage(
+                jobId,
+                emitter,
+                Map.of(
+                    "success", result.getSuccess(),
+                    "runningTime", result.getRunningTime(),
+                    "memoryUsage", result.getMemoryUsage(),
+                    "codeSize", result.getCodeSize(),
+                    "error", result.getError(),
+                    "detail", result.getDetail()
+                ),
+                String.valueOf(result.getTestcaseIndex())
+            );
+        }
     }
 
     public int executeCode(String jobId, Long userId) {
@@ -128,7 +136,7 @@ public class CodeChallengeService {
         subscriptions.put(jobId, emitter);
     }
 
-    public void removeSubscription(String jobId) {
+    public void removeSubscriptionAndSetEmitterComplete(String jobId) {
         SseEmitter emitter = subscriptions.get(jobId);
         if (emitter != null) {
             try {
@@ -142,6 +150,36 @@ public class CodeChallengeService {
 
     public SseEmitter getEmitter(String jobId) {
         return subscriptions.get(jobId);
+    }
+
+    public SseSendResultStatus sendSseMessage(
+        String jobId,
+        SseEmitter emitter,
+        Object data,
+        @Nullable String id
+    ) {
+        try {
+            if (id == null) {
+                emitter.send(SseEmitter.event().data(data));
+            } else {
+                emitter.send(SseEmitter.event()
+                        .id(id)
+                        .data(data)
+                );
+            }
+            return SseSendResultStatus.SUCCESS;
+        } catch (IOException e) {
+            // 클라이언트와의 SSE 연결이 모종의 이유(이탈, 네트워크 장애)로 끊어져
+            // 메시지를 send 할 수 없는 경우 처리
+            log.info("Disconnected from client: {}", e.getMessage());
+            removeSubscriptionAndSetEmitterComplete(jobId);
+            return SseSendResultStatus.GONE;
+        } catch (Exception e) {
+            // 기타 예외 처리
+            log.error("Unexpected error occurred while sending event for jobId: {}", jobId, e);
+            removeSubscriptionAndSetEmitterComplete(jobId);
+            return SseSendResultStatus.ERROR;
+        }
     }
 
     private Map<String, Object> sendRequestToFlask(String url, Object body, HttpMethod method) {

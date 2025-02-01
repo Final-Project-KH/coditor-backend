@@ -45,10 +45,13 @@ public class CodeChallengeController {
             HttpServletRequest request,
             @RequestParam String jobId
     ) {
-        SseEmitter emitter = codeChallengeService.getEmitter(jobId);
+        if (jobId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
-        if (jobId == null || emitter == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid job id");
+        SseEmitter emitter = codeChallengeService.getEmitter(jobId);
+        if (emitter == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
         // Last-Event-ID 헤더 처리 (재연결 시 사용)
@@ -64,33 +67,27 @@ public class CodeChallengeController {
 //            }
 //        }
 
-        // 3. 클라이언트 연결 이벤트 핸들러 설정
         emitter.onCompletion(() -> {
             log.info("SSE Stream completed for job id: {}", jobId);
-            codeChallengeService.removeSubscription(jobId);
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
         emitter.onTimeout(() -> {
             log.warn("SSE Stream timed out for job id: {}", jobId);
-            codeChallengeService.removeSubscription(jobId);
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
         emitter.onError(e -> {
             log.warn("SSE error for job id: {}, error message: {}", jobId, e.getMessage());
-            codeChallengeService.removeSubscription(jobId);
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
-        // 4. 초기 연결 확인 이벤트 전송
-        try {
-            emitter.send(SseEmitter.event()
-                    .data("Connection Established"));
-        } catch (IOException e) {
-            try {
-                emitter.complete();
-            } catch (IllegalStateException e2) {
-                // 이미 complete 인 경우 또 complete 되어 발생하는 로그 제거
-            }
-        }
+        codeChallengeService.sendSseMessage(
+            jobId,
+            emitter,
+            "Connection Established",
+            null
+        );
 
         return emitter;
     }
