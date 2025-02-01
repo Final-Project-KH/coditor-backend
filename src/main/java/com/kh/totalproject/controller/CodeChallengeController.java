@@ -28,7 +28,7 @@ public class CodeChallengeController {
             @RequestBody SubmitCodeRequest dto
     ) {
         dto.setUserId(getCurrentUserIdOrThrow());
-        String jobId = codeChallengeService.submit(dto);
+        String jobId = codeChallengeService.createJob(dto);
         codeChallengeService.addSubscription(jobId, new SseEmitter(180_000L));
         return ResponseEntity.ok().body(
                 SubmitCodeResponse.builder()
@@ -95,7 +95,7 @@ public class CodeChallengeController {
             @RequestParam(name = "jobid") String jobId
     ) {
         Long userId = getCurrentUserIdOrThrow();
-        int numOfTestcase = codeChallengeService.executeCode(jobId, userId);
+        int numOfTestcase = codeChallengeService.executeJob(jobId, userId);
         // 비정상인 경우 프론트는 SSE 연결을 종료
         return ResponseEntity.ok().body(
                 ExecuteCodeResponse.builder()
