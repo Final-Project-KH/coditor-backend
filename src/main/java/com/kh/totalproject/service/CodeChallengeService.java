@@ -7,7 +7,7 @@ import com.kh.totalproject.dto.flask.request.ExecuteJobRequest;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
 import com.kh.totalproject.exception.CustomHttpClientErrorException;
 import com.kh.totalproject.exception.CustomHttpServerErrorException;
-import com.kh.totalproject.exception.FlaskResponseIsNotValidException;
+import com.kh.totalproject.exception.InvalidResponseBodyException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -39,7 +39,7 @@ public class CodeChallengeService {
         Map<String, Object> responseData = (Map<String, Object>) flaskResponse.get("data");
 
         if (responseData.get("jobId") == null) {
-            throw new FlaskResponseIsNotValidException("코딩 테스트 submit 요청에 대해 Flask에서 성공적인 응답을 전달하였으나, 응답 본문에서 jobId를 가져올 수 없습니다.");
+            throw new InvalidResponseBodyException("코딩 테스트 submit 요청에 대한 응답 본문에서 jobId를 가져올 수 없습니다.");
         }
         return (String) responseData.get("jobId");
     }
@@ -120,7 +120,7 @@ public class CodeChallengeService {
         Map<String, Object> responseData = (Map<String, Object>) flaskResponse.get("data");
 
         if (responseData.get("numOfTestcase") == null) {
-            throw new FlaskResponseIsNotValidException("코딩 테스트 execute 요청에 대해 Flask에서 성공적인 응답을 전달하였으나, 응답 본문에서 numOfTestcase를 가져올 수 없습니다.");
+            throw new InvalidResponseBodyException("코딩 테스트 execute 요청에 대한 응답 본문에서 numOfTestcase를 가져올 수 없습니다.");
         }
         return (int) responseData.get("numOfTestcase");
     }
