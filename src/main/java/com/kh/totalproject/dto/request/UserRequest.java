@@ -36,7 +36,6 @@ public class UserRequest {
         return User.builder()
                 .userKey(existingData.getUserKey())
                 .nickname(nickname != null ? nickname : existingData.getNickname())
-                .profileUrl(profileUrl != null ? profileUrl : existingData.getProfileUrl())
                 .build();
     }
 }

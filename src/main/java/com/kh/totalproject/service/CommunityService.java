@@ -251,10 +251,10 @@ public class CommunityService {
             
             // 검색 = 제목 + 내용
             if (search != null && !search.isEmpty()) {
-                String searchPatten = "%" + search + "%";   // 제목과 내용을 복합하는 변수
+                String searchPattern = "%" + search + "%";   // 제목과 내용을 복합하는 변수
                 predicates.add(cb.or(
-                        cb.like(root.get("title"), searchPatten),
-                        cb.like(root.get("content"), searchPatten)
+                        cb.like(root.get("title"), searchPattern),
+                        cb.like(root.get("content"), searchPattern)
                 ));
             }
 

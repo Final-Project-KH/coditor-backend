@@ -35,8 +35,8 @@ public class CsService {
 
     // 신고 게시글 생성 서비스
     public Boolean createReportPost(String authorizationHeader, ReportRequest reportRequest) {
-        String token = authorizationHeader.replace("Bearer ", "");
         try {
+            String token = authorizationHeader.replace("Bearer ", "");
             // 토큰에서 인증 정보 확인
             jwtUtil.getAuthentication(token);
             // Access 토큰에서 id 추출
@@ -67,8 +67,8 @@ public class CsService {
 
     // 건의사항 게시글 생성 서비스
     public Boolean createSuggestionPost(String authorizationHeader, SuggestRequest suggestRequest) {
-        String token = authorizationHeader.replace("Bearer ", "");
         try {
+            String token = authorizationHeader.replace("Bearer ", "");
             // 토큰에서 인증 정보 확인
             jwtUtil.getAuthentication(token);
             // Access 토큰에서 id 추출
@@ -138,131 +138,131 @@ public class CsService {
         }
     }
 
-    public Boolean AddReportComment(String authorizationHeader, ReportCommentRequest reportCommentRequest) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            ReportBoard reportBoard = reportRepository.findById(reportCommentRequest.getReportId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시물을 찾을 수 없습니다."));
-            ReportComment reportComment = reportCommentRequest.toAddComment(user, reportBoard);
-            reportCommentRepository.save(reportComment);
-            return true;
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-    }
-
-    public Boolean AddSuggestionComment(String authorizationHeader, SuggestionCommentRequest suggestionCommentRequest) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionCommentRequest.getSuggestionId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
-            SuggestionComment suggestionComment = suggestionCommentRequest.toAddComment(user, suggestionBoard);
-            suggestionCommentRepository.save(suggestionComment);
-            return true;
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-    }
-
-    public Boolean ModifyReportComment(String authorizationHeader, ReportCommentRequest reportCommentRequest) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            ReportBoard reportBoard = reportRepository.findById(reportCommentRequest.getReportId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
-            ReportComment existingComment = reportCommentRepository.findById(reportCommentRequest.getCommentId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-            ReportComment reportComment = reportCommentRequest.toModifyComment(user, reportBoard, existingComment);
-            reportCommentRepository.save(reportComment);
-            return true;
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-    }
-
-    public Boolean ModifySuggestionComment(String authorizationHeader, SuggestionCommentRequest suggestionCommentRequest) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionCommentRequest.getSuggestionId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
-            SuggestionComment existingComment = suggestionCommentRepository.findById(suggestionCommentRequest.getCommentId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-            SuggestionComment suggestionComment = suggestionCommentRequest.toModifyComment(user, suggestionBoard, existingComment);
-            suggestionCommentRepository.save(suggestionComment);
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-        return null;
-    }
-
-    public Boolean DeleteReportPost(String authorizationHeader, Long commentId) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            ReportComment reportComment = reportCommentRepository.findById(commentId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-            if (!reportComment.getUser().getUserKey().equals(user.getUserKey())) {
-                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
-            }
-            reportCommentRepository.deleteById(commentId);
-            return true;
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-    }
-
-    public Boolean DeleteSuggestionPost(String authorizationHeader, Long commentId) {
-        try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-            SuggestionComment suggestionComment = suggestionCommentRepository.findById(commentId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-            if (!suggestionComment.getUser().getUserKey().equals(user.getUserKey())) {
-                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
-            }
-            suggestionCommentRepository.deleteById(commentId);
-            return true;
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-        }
-    }
+//    public Boolean AddReportComment(String authorizationHeader, ReportCommentRequest reportCommentRequest) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            ReportBoard reportBoard = reportRepository.findById(reportCommentRequest.getReportId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 게시물을 찾을 수 없습니다."));
+//            ReportComment reportComment = reportCommentRequest.toAddComment(user, reportBoard);
+//            reportCommentRepository.save(reportComment);
+//            return true;
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//    }
+//
+//    public Boolean AddSuggestionComment(String authorizationHeader, SuggestionCommentRequest suggestionCommentRequest) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionCommentRequest.getSuggestionId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+//            SuggestionComment suggestionComment = suggestionCommentRequest.toAddComment(user, suggestionBoard);
+//            suggestionCommentRepository.save(suggestionComment);
+//            return true;
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//    }
+//
+//    public Boolean ModifyReportComment(String authorizationHeader, ReportCommentRequest reportCommentRequest) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            ReportBoard reportBoard = reportRepository.findById(reportCommentRequest.getReportId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+//            ReportComment existingComment = reportCommentRepository.findById(reportCommentRequest.getCommentId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+//            ReportComment reportComment = reportCommentRequest.toModifyComment(user, reportBoard, existingComment);
+//            reportCommentRepository.save(reportComment);
+//            return true;
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//    }
+//
+//    public Boolean ModifySuggestionComment(String authorizationHeader, SuggestionCommentRequest suggestionCommentRequest) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionCommentRequest.getSuggestionId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+//            SuggestionComment existingComment = suggestionCommentRepository.findById(suggestionCommentRequest.getCommentId())
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+//            SuggestionComment suggestionComment = suggestionCommentRequest.toModifyComment(user, suggestionBoard, existingComment);
+//            suggestionCommentRepository.save(suggestionComment);
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//        return null;
+//    }
+//
+//    public Boolean DeleteReportPost(String authorizationHeader, Long commentId) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            ReportComment reportComment = reportCommentRepository.findById(commentId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+//            if (!reportComment.getUser().getUserKey().equals(user.getUserKey())) {
+//                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
+//            }
+//            reportCommentRepository.deleteById(commentId);
+//            return true;
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//    }
+//
+//    public Boolean DeleteSuggestionPost(String authorizationHeader, Long commentId) {
+//        try {
+//            String token = authorizationHeader.replace("Bearer ", "");
+//            // 토큰에서 인증 정보 확인
+//            jwtUtil.getAuthentication(token);
+//            // Access 토큰에서 id 추출
+//            Long userId = jwtUtil.extractUserId(token);
+//
+//            User user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+//            SuggestionComment suggestionComment = suggestionCommentRepository.findById(commentId)
+//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+//            if (!suggestionComment.getUser().getUserKey().equals(user.getUserKey())) {
+//                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
+//            }
+//            suggestionCommentRepository.deleteById(commentId);
+//            return true;
+//        } catch (AccessDeniedException e) {
+//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+//        }
+//    }
 }
