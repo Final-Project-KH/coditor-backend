@@ -261,7 +261,6 @@ public class CommunityService {
 
 
     private Specification<?> createSpecification(BoardType type, String status, String enumFilter, String search) {
-        log.info("Creating specification: type={}, status={}, enumFilter={}, search={}", type, status, enumFilter, search);
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -270,10 +269,8 @@ public class CommunityService {
             if (status != null && !status.isEmpty()) {
                 try {
                     Status statusEnum = Status.valueOf(status.toUpperCase());
-                    log.debug("Applying status filter: {}", statusEnum);
                     predicates.add(cb.equal(root.get("status"), statusEnum));
                 } catch (IllegalArgumentException e) {
-                    log.error("Invalid status value: {}", status, e);
                 }
             }
 
@@ -302,7 +299,6 @@ public class CommunityService {
             if (!predicates.isEmpty()) {
                 Predicate finalPredicate = cb.and(predicates.toArray(new Predicate[0]));
                 query.where(finalPredicate);
-                log.debug("Final Query Predicate: {}", finalPredicate);
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
