@@ -8,6 +8,7 @@ package com.kh.totalproject.service;
 import com.kh.totalproject.constant.BoardType;
 import com.kh.totalproject.constant.Reaction;
 import com.kh.totalproject.constant.Status;
+import com.kh.totalproject.constant.Team;
 import com.kh.totalproject.dto.request.BoardRequest;
 import com.kh.totalproject.dto.request.CommentRequest;
 import com.kh.totalproject.dto.response.BoardReactionResponse;
@@ -16,7 +17,10 @@ import com.kh.totalproject.dto.response.CommentResponse;
 import com.kh.totalproject.entity.*;
 import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
+import com.kh.totalproject.util.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,17 +54,13 @@ public class CommunityService {
     private final BoardReactionRepository boardReactionRepository;
     private final JwtUtil jwtUtil;
 
-    // 게시글 생성 서비스
-    public Boolean createPost(String authorizationHeader, BoardRequest boardRequest, String boardType) {
-        String token = authorizationHeader.replace("Bearer ", "");
+    // 게시글 생성 서비스   // getCurrentUserIdOrThrow 를 통해서 Context 헤더로 들어온 Access 토큰을 처리
+    public Boolean createPost(BoardRequest boardRequest, String boardType) {
         try {
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
 
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: " + userId));
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
             // setName 으로 닉네임을 변수값으로 지정
             boardRequest.setName(user.getNickname());
@@ -189,34 +189,35 @@ public class CommunityService {
                                                           String sortBy, String order,
                                                           String status, String enumFilter, String search) {
         BoardType type = BoardType.fromString(boardType);
-
-        // 정렬 설정
-        if (sortBy == null || sortBy.isEmpty()) {
-            sortBy = "createdAt";
-        }
-        if (order == null || order.isEmpty()) {
-            order = "DESC";
-        }
-
         Sort sort = createSort(sortBy, order);
         Pageable pageable = PageRequest.of(page - 1, size, sort);
-
-        // 동적 쿼리 생성
         Specification<?> spec = createSpecification(type, status, enumFilter, search);
 
-        // 게시판 타입에 따른 repository 선택 및 쿼리 실행
-        Page<?> result = switch (type) {
-            case CODING -> codingBoardRepository.findAll((Specification<CodingBoard>) spec, pageable);
-            case COURSE -> courseBoardRepository.findAll((Specification<CourseBoard>) spec, pageable);
-            case STUDY -> studyBoardRepository.findAll((Specification<StudyBoard>) spec, pageable);
-            case TEAM -> teamBoardRepository.findAll((Specification<TeamBoard>) spec, pageable);
-        };
+        Page<Object[]> result;
+        switch (type) {
+            case CODING:
+                result = codingBoardRepository.findAllWithCommentCnt((Specification<CodingBoard>) spec, pageable);
+                break;
+            case COURSE:
+                result = courseBoardRepository.findAllWithCommentCnt((Specification<CourseBoard>) spec, pageable);
+                break;
+            case STUDY:
+                result = studyBoardRepository.findAllWithCommentCnt((Specification<StudyBoard>) spec, pageable);
+                break;
+            case TEAM:
+                result = teamBoardRepository.findAllWithCommentCnt((Specification<TeamBoard>) spec, pageable);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid board type");
+        }
 
-        // 결과를 BoardResponse 로 매핑
-        return result.map(board -> mapToBoardResponse(board, type));
+        return result.map(objects -> {
+            Object board = objects[0];
+            Long commentCount = (Long) objects[1];
+            return mapToBoardResponse(board, type, commentCount.intValue());
+        });
     }
 
-    // 정렬 생성 case 별
     private Sort createSort(String sortBy, String order) {
         Sort.Direction direction = Sort.Direction.fromString(order);
         return switch (sortBy) {
@@ -226,10 +227,8 @@ public class CommunityService {
         };
     }
 
-    // specification 생성, enum json 타입 검색과 게시판 전체검색 구현
     private Specification<?> createSpecification(BoardType type, String status, String enumFilter, String search) {
         return (root, query, cb) -> {
-            // predicate 생성
             List<Predicate> predicates = new ArrayList<>();
 
             // 상태 필터
@@ -248,41 +247,42 @@ public class CommunityService {
                 predicates.add(cb.isTrue(cb.function("JSON_CONTAINS", Boolean.class,
                         root.get(fieldName), cb.literal('"' + enumFilter + '"'), cb.literal("$"))));
             }
-            
+
             // 검색 = 제목 + 내용
             if (search != null && !search.isEmpty()) {
-                String searchPatten = "%" + search + "%";   // 제목과 내용을 복합하는 변수
+                String searchPattern = "%" + search + "%";
                 predicates.add(cb.or(
-                        cb.like(root.get("title"), searchPatten),
-                        cb.like(root.get("content"), searchPatten)
+                        cb.like(root.get("title"), searchPattern),
+                        cb.like(root.get("content"), searchPattern)
                 ));
             }
+
+            // JPQL 쿼리 사용하여 동적으로 각 게시판의 댓글 카운트 정렬
+            Join<Object, Object> commentJoin = root.join("comments", JoinType.LEFT);
+            query.groupBy(root);
+            query.multiselect(root, cb.count(commentJoin).alias("commentCnt"));
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    // 게시판별 맵핑 yield 사용시 반환과 로직수행 둘다 가능
-    private BoardResponse mapToBoardResponse(Object board, BoardType type) {
+    // 게시판별 맵핑
+    private BoardResponse mapToBoardResponse(Object board, BoardType type, int commentCnt) {
         return switch (type) {
             case CODING -> {
                 CodingBoard codingBoard = (CodingBoard) board;
-                int commentCnt = commentRepository.countByBoardId(codingBoard.getId());
                 yield BoardResponse.ofAllCodingBoard(codingBoard, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());
             }
             case COURSE -> {
                 CourseBoard courseBoard = (CourseBoard) board;
-                int commentCnt = commentRepository.countByBoardId(courseBoard.getId());
                 yield BoardResponse.ofAllCourseBoard(courseBoard, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
             }
             case STUDY -> {
                 StudyBoard studyBoard = (StudyBoard) board;
-                int commentCnt = commentRepository.countByBoardId(studyBoard.getId());
                 yield BoardResponse.ofAllStudyBoard(studyBoard, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
             }
             case TEAM -> {
                 TeamBoard teamBoard = (TeamBoard) board;
-                int commentCnt = commentRepository.countByBoardId(teamBoard.getId());
                 yield BoardResponse.ofAllTeamBoard(teamBoard, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
@@ -474,11 +474,15 @@ public class CommunityService {
     public List<BoardResponse> getTopWriterBoard() {
         // Pageable 사용해 0페이지 10개 제한 (10명)
         Pageable topTen = PageRequest.of(0, 10);
-        // Repository JPQL 결과 반환후에 List 안에 결과 할당 (닉네임, 글 생성 갯수)
+        // Repository JPQL 결과 반환후에 List 안에 결과 할당 (닉네임, 프로필 사진, 글 생성 갯수)
         List<Object[]> results = boardRepository.findTopUsersByPostCount(topTen);
 
         return results.stream()
-                .map(result -> BoardResponse.ofTopWriterBoard((String) result[0], ((Long) result[1]).intValue()))
+                .map(result -> BoardResponse.ofTopWriterBoard(
+                        (String) result[0],         // 닉네임
+                        (String) result[1],         // 프로필 사진
+                        ((Long) result[2]).intValue() // 게시글 개수
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -492,7 +496,11 @@ public class CommunityService {
         List<Object[]> results = boardRepository.findWeeklyPopularPosts(startDate, endDate, topFive);
 
         return results.stream()
-                .map(result -> BoardResponse.ofWeeklyPopularPost((Board) result[0], (String) result[1]))
+                .map(result -> BoardResponse.ofWeeklyPopularPost(
+                        (Board) result[0],           // 게시글
+                        (String) result[1],          // 닉네임
+                        (String) result[2]           // 프로필 사진 URL
+                ))
                 .collect(Collectors.toList());
     }
 }

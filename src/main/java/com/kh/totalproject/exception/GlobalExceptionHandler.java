@@ -93,9 +93,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(FlaskResponseIsNotValidException.class)
-    public ResponseEntity<Object> handleFlaskResponseIsNotValidException(FlaskResponseIsNotValidException ex) {
-        log.error("Flask의 응답이 유효하지 않습니다: {}", ex.getMessage());
+    @ExceptionHandler(InvalidResponseBodyException.class)
+    public ResponseEntity<Object> handleFlaskResponseIsNotValidException(InvalidResponseBodyException ex) {
+        log.error("InvalidResponseBodyException: {}", ex.getMessage());
         return ResponseEntity.internalServerError().body(
             Map.of("error", UNKNOWN_FLASK_ERROR_MESSAGE)
         );

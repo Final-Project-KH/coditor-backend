@@ -35,7 +35,7 @@ public class CsController {
     }
 
     // CS 댓글 조회 (Admin 페이지에서도 똑같이 구현 필요)
-    // 신고 글에 댓글 조회
+    // 신고 글에 댓글 조회  (Page 타입이 아닌 그냥 하나만 볼 수있게 변경 필요)
     @GetMapping("/list/reportComment")
     ResponseEntity<Page<ReportCommentResponse>> listReportComment(@RequestHeader("Authorization") String authorizationHeader,
                                                                   @RequestParam Long reportId,
@@ -47,7 +47,7 @@ public class CsController {
     }
 
     // CS 댓글 조회 (Admin 페이지에서도 똑같이 구현 필요)
-    // 건의사항 글에 댓글 조회
+    // 건의사항 글에 댓글 조회 (Page 타입이 아닌 그냥 하나만 볼 수있게 변경 필요)
     @GetMapping("/list/suggestionComment")
     ResponseEntity<Page<SuggestionCommentResponse>> listSuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
                                                                           @RequestParam Long suggestionId,
@@ -58,51 +58,51 @@ public class CsController {
         return ResponseEntity.ok(csService.listSuggestionComment(authorizationHeader, suggestionId, page, size, sortBy, order));
     }
 
-    // CS 댓글 작성 (Admin 페이지에서도 똑같이 구현 필요)
-    // 신고 글에 댓글 작성
-    @PostMapping("/new/reportComment")
-    ResponseEntity<Boolean> addReportComment(@RequestHeader("Authorization") String authorizationHeader,
-                                             @RequestBody ReportCommentRequest reportCommentRequest) {
-        return ResponseEntity.ok(csService.AddReportComment(authorizationHeader, reportCommentRequest));
-    }
-
-    // CS 댓글 작성 (Admin 페이지에서도 똑같이 구현 필요)
-    // 건의사항 글에 댓글 작성
-    @PostMapping("/new/suggestionComment")
-    ResponseEntity<Boolean> addSuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
-                                             @RequestBody SuggestionCommentRequest suggestionCommentRequest) {
-        return ResponseEntity.ok(csService.AddSuggestionComment(authorizationHeader, suggestionCommentRequest));
-    }
-
-    // CS 댓글 수정 (Admin 페이지에서도 똑같이 구현 필요)
-    // 신고 글에 댓글 수정
-    @PutMapping("/modify/reportComment")
-    ResponseEntity<Boolean> modifyReportComment(@RequestHeader("Authorization") String authorizationHeader,
-                                                @RequestBody ReportCommentRequest reportCommentRequest) {
-        return ResponseEntity.ok(csService.ModifyReportComment(authorizationHeader, reportCommentRequest));
-    }
-
-    // CS 댓글 수정 (Admin 페이지에서도 똑같이 구현 필요)
-    // 건의사항 글에 댓글 수정
-    @PutMapping("/modify/suggestionComment")
-    ResponseEntity<Boolean> modifySuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
-                                                    @RequestBody SuggestionCommentRequest suggestionCommentRequest) {
-        return ResponseEntity.ok(csService.ModifySuggestionComment(authorizationHeader, suggestionCommentRequest));
-    }
-
-    // CS 댓글 삭제 (Admin 페이지에서도 똑같이 구현 필요)
-    // 신고 글에 댓글 삭제
-    @DeleteMapping("/delete/reportComment")
-    ResponseEntity<Boolean> deleteReportComment(@RequestHeader("Authorization") String authorizationHeader,
-                                                @RequestParam Long commentId) {
-        return ResponseEntity.ok(csService.DeleteReportPost(authorizationHeader, commentId));
-    }
-
-    // CS 댓글 삭제 (Admin 페이지에서도 똑같이 구현 필요)
-    // 건의사항 글에 댓글 삭제
-    @DeleteMapping("/delete/suggestionComment")
-    ResponseEntity<Boolean> deleteSuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
-                                                    @RequestParam Long commentId) {
-        return ResponseEntity.ok(csService.DeleteSuggestionPost(authorizationHeader, commentId));
-    }
+//    // CS 댓글 작성 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 신고 글에 댓글 작성 (답변 형식으로 바뀐다면 필요 없어지므로 정리)
+//    @PostMapping("/new/reportComment")
+//    ResponseEntity<Boolean> addReportComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                             @RequestBody ReportCommentRequest reportCommentRequest) {
+//        return ResponseEntity.ok(csService.AddReportComment(authorizationHeader, reportCommentRequest));
+//    }
+//
+//    // CS 댓글 작성 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 건의사항 글에 댓글 작성 (답변 형식으로 바뀐다면 필요 없어지므로 정리)
+//    @PostMapping("/new/suggestionComment")
+//    ResponseEntity<Boolean> addSuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                             @RequestBody SuggestionCommentRequest suggestionCommentRequest) {
+//        return ResponseEntity.ok(csService.AddSuggestionComment(authorizationHeader, suggestionCommentRequest));
+//    }
+//
+//    // CS 댓글 수정 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 신고 글에 댓글 수정
+//    @PutMapping("/modify/reportComment")
+//    ResponseEntity<Boolean> modifyReportComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                                @RequestBody ReportCommentRequest reportCommentRequest) {
+//        return ResponseEntity.ok(csService.ModifyReportComment(authorizationHeader, reportCommentRequest));
+//    }
+//
+//    // CS 댓글 수정 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 건의사항 글에 댓글 수정
+//    @PutMapping("/modify/suggestionComment")
+//    ResponseEntity<Boolean> modifySuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                                    @RequestBody SuggestionCommentRequest suggestionCommentRequest) {
+//        return ResponseEntity.ok(csService.ModifySuggestionComment(authorizationHeader, suggestionCommentRequest));
+//    }
+//
+//    // CS 댓글 삭제 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 신고 글에 댓글 삭제
+//    @DeleteMapping("/delete/reportComment")
+//    ResponseEntity<Boolean> deleteReportComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                                @RequestParam Long commentId) {
+//        return ResponseEntity.ok(csService.DeleteReportPost(authorizationHeader, commentId));
+//    }
+//
+//    // CS 댓글 삭제 (Admin 페이지에서도 똑같이 구현 필요)
+//    // 건의사항 글에 댓글 삭제
+//    @DeleteMapping("/delete/suggestionComment")
+//    ResponseEntity<Boolean> deleteSuggestionComment(@RequestHeader("Authorization") String authorizationHeader,
+//                                                    @RequestParam Long commentId) {
+//        return ResponseEntity.ok(csService.DeleteSuggestionPost(authorizationHeader, commentId));
+//    }
 }

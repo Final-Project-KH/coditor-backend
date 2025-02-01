@@ -185,6 +185,23 @@ public class JwtUtil {
         return Long.valueOf(id);
     }
 
+    // authorities 의 저장 방식이 Enum 인데 [ADMIN], [USER] 로 되어있다면 이 메서드를 활성화
+//    public String extractUserRole(String token) {
+//        Claims claims = parseToken(token);
+//        String authorities = claims.get("authorities").toString();
+//
+//        if (authorities.startsWith("[") && authorities.endsWith("]")) {
+//            authorities = authorities.substring(1, authorities.length() - 1);
+//        }
+//        return authorities;
+//    }
+
+    // Access 토큰으로 role 을 추출
+    public String extractUserRole(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("authorities").toString();
+    }
+
     // access 토큰 재발급
     public String generateAccessToken(Authentication authentication, HttpServletResponse response) {
         return generateToken(authentication, response).getAccessToken();
