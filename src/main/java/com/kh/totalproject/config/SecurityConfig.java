@@ -57,6 +57,7 @@ public class SecurityConfig {
                                 "/community/list/all",
 
                                 "/community/list/one",
+                                "/community/list/one/check",
                                 "/community/list/comment",
                                 "/community/topWriter",
                                 "/community/weeklyPopularPost",

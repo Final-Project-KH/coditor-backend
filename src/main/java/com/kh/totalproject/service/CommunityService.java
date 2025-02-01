@@ -288,12 +288,20 @@ public class CommunityService {
         };
     }
 
-    // 각 게시판 별 단일 글을 불러오는 서비스
-    public BoardResponse listOneById(long id) {
+    // 단순 조회수 올리기 서비스
+    public Boolean listOneByIdCheck(long id) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
 
         increaseViewCnt(board); // 조회수 증가
+        
+        return true;
+    }
+
+    // 각 게시판 별 단일 글을 불러오는 서비스
+    public BoardResponse listOneById(long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
 
         // 댓글 수 및 작성자 글 수 가져오기
         int commentCnt = commentRepository.countByBoardId(id);
