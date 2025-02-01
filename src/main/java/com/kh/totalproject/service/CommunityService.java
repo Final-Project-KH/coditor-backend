@@ -19,9 +19,7 @@ import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
 import com.kh.totalproject.util.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -188,55 +186,98 @@ public class CommunityService {
     public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType,
                                                           String sortBy, String order,
                                                           String status, String enumFilter, String search) {
+        if (sortBy == null || sortBy.isEmpty()) {
+            sortBy = "createdAt";  // 기본 정렬: 최신순
+        }
+        if (order == null || order.isEmpty()) {
+            order = "DESC";  // 기본 정렬: 내림차순
+        }
+
         BoardType type = BoardType.fromString(boardType);
         Sort sort = createSort(sortBy, order);
         Pageable pageable = PageRequest.of(page - 1, size, sort);
         Specification<?> spec = createSpecification(type, status, enumFilter, search);
 
-        Page<Object[]> result;
+        // 타입별로 Repository 참조
+        Page<BoardResponse> result;
         switch (type) {
             case CODING:
-                result = codingBoardRepository.findAllWithCommentCnt((Specification<CodingBoard>) spec, pageable);
+                result = codingBoardRepository.findAllWithCommentCntForCoding(
+                                (status != null && !status.isEmpty()) ? Status.valueOf(status.toUpperCase()) : null, // status가 null인 경우 null을 사용
+                                sortBy,
+                                (Specification<CodingBoard>) spec,
+                                pageable)
+                        .map(board -> mapToBoardResponse((CodingBoard) board[0], BoardType.CODING, ((Long) board[1]).longValue())); // 수정
                 break;
             case COURSE:
-                result = courseBoardRepository.findAllWithCommentCnt((Specification<CourseBoard>) spec, pageable);
+                result = courseBoardRepository.findAllWithCommentCntForCourse(
+                                sortBy,
+                                (Specification<CourseBoard>) spec,
+                                pageable)
+                        .map(board -> mapToBoardResponse((CourseBoard) board[0], BoardType.COURSE, ((Long) board[1]).longValue())); // 수정
                 break;
             case STUDY:
-                result = studyBoardRepository.findAllWithCommentCnt((Specification<StudyBoard>) spec, pageable);
+                result = studyBoardRepository.findAllWithCommentCntForStudy(
+                                (status != null && !status.isEmpty()) ? Status.valueOf(status.toUpperCase()) : null, // status가 null인 경우 null을 사용
+                                sortBy,
+                                (Specification<StudyBoard>) spec,
+                                pageable)
+                        .map(board -> mapToBoardResponse((StudyBoard) board[0], BoardType.STUDY, ((Long) board[1]).longValue())); // 수정
                 break;
             case TEAM:
-                result = teamBoardRepository.findAllWithCommentCnt((Specification<TeamBoard>) spec, pageable);
+                result = teamBoardRepository.findAllWithCommentCntForTeam(
+                                (status != null && !status.isEmpty()) ? Status.valueOf(status.toUpperCase()) : null, // status가 null인 경우 null을 사용
+                                sortBy,
+                                (Specification<TeamBoard>) spec,
+                                pageable)
+                        .map(board -> mapToBoardResponse((TeamBoard) board[0], BoardType.TEAM, ((Long) board[1]).longValue())); // 수정
                 break;
             default:
-                throw new IllegalArgumentException("Invalid board type");
+                throw new IllegalArgumentException("유효하지 않은 BoardType 입니다.");
         }
 
-        return result.map(objects -> {
-            Object board = objects[0];
-            Long commentCount = (Long) objects[1];
-            return mapToBoardResponse(board, type, commentCount.intValue());
-        });
+        log.info("쿼리로 호출할때 불려오는 갯수 : {}", result.getTotalElements());
+
+        return result;
     }
 
     private Sort createSort(String sortBy, String order) {
-        Sort.Direction direction = Sort.Direction.fromString(order);
-        return switch (sortBy) {
-            case "createdAt", "viewCnt", "likeCnt", "commentCnt" -> Sort.by(direction, sortBy);
-            case "status" -> Sort.by(Sort.Order.by("status"), Sort.Order.desc("createdAt"));
-            default -> Sort.by(Sort.Direction.DESC, "createdAt");
-        };
+        Sort.Direction direction = "DESC".equalsIgnoreCase(order) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        // commentCnt 기준 정렬
+        if ("commentCnt".equalsIgnoreCase(sortBy)) {
+            return Sort.by(direction, "commentCnt");
+        }
+
+        // 기존 정렬 기준
+        if ("createdAt".equalsIgnoreCase(sortBy) || "viewCnt".equalsIgnoreCase(sortBy)
+                || "likeCnt".equalsIgnoreCase(sortBy)) {
+            return Sort.by(direction, sortBy);
+        }
+
+        // 기본 정렬 (최신순)
+        return Sort.by(Sort.Direction.DESC, "createdAt");
     }
 
+
     private Specification<?> createSpecification(BoardType type, String status, String enumFilter, String search) {
+        log.info("Creating specification: type={}, status={}, enumFilter={}, search={}", type, status, enumFilter, search);
+
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // 상태 필터
+            // status 필터 적용 (ACTIVE / INACTIVE)
             if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("status"), Status.valueOf(status)));
+                try {
+                    Status statusEnum = Status.valueOf(status.toUpperCase());
+                    log.debug("Applying status filter: {}", statusEnum);
+                    predicates.add(cb.equal(root.get("status"), statusEnum));
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid status value: {}", status, e);
+                }
             }
 
-            // Enum 필터 (JSON 타입 필드 검색)
+            // enumFilter 필터 적용 (각 게시판별 필드 다름 language, study, team, course)
             if (enumFilter != null && !enumFilter.isEmpty()) {
                 String fieldName = switch (type) {
                     case CODING -> "language";
@@ -248,7 +289,7 @@ public class CommunityService {
                         root.get(fieldName), cb.literal('"' + enumFilter + '"'), cb.literal("$"))));
             }
 
-            // 검색 = 제목 + 내용
+            // 검색 필터 (제목 + 내용으로 검색)
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search + "%";
                 predicates.add(cb.or(
@@ -257,33 +298,35 @@ public class CommunityService {
                 ));
             }
 
-            // JPQL 쿼리 사용하여 동적으로 각 게시판의 댓글 카운트 정렬
-            Join<Object, Object> commentJoin = root.join("comments", JoinType.LEFT);
-            query.groupBy(root);
-            query.multiselect(root, cb.count(commentJoin).alias("commentCnt"));
+            // 최종 WHERE 조건 적용(쿼리 대신 실행할 JPA executor)
+            if (!predicates.isEmpty()) {
+                Predicate finalPredicate = cb.and(predicates.toArray(new Predicate[0]));
+                query.where(finalPredicate);
+                log.debug("Final Query Predicate: {}", finalPredicate);
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
     // 게시판별 맵핑
-    private BoardResponse mapToBoardResponse(Object board, BoardType type, int commentCnt) {
+    private BoardResponse mapToBoardResponse(Board board, BoardType type, Long commentCnt) {
         return switch (type) {
             case CODING -> {
                 CodingBoard codingBoard = (CodingBoard) board;
-                yield BoardResponse.ofAllCodingBoard(codingBoard, commentCnt, codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());
+                yield BoardResponse.ofAllCodingBoard(codingBoard, commentCnt.intValue(), codingBoard.getLikeCnt(), codingBoard.getDislikeCnt());
             }
             case COURSE -> {
                 CourseBoard courseBoard = (CourseBoard) board;
-                yield BoardResponse.ofAllCourseBoard(courseBoard, commentCnt, courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
+                yield BoardResponse.ofAllCourseBoard(courseBoard, commentCnt.intValue(), courseBoard.getLikeCnt(), courseBoard.getDislikeCnt());
             }
             case STUDY -> {
                 StudyBoard studyBoard = (StudyBoard) board;
-                yield BoardResponse.ofAllStudyBoard(studyBoard, commentCnt, studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
+                yield BoardResponse.ofAllStudyBoard(studyBoard, commentCnt.intValue(), studyBoard.getLikeCnt(), studyBoard.getDislikeCnt());
             }
             case TEAM -> {
                 TeamBoard teamBoard = (TeamBoard) board;
-                yield BoardResponse.ofAllTeamBoard(teamBoard, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+                yield BoardResponse.ofAllTeamBoard(teamBoard, commentCnt.intValue(), teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
     }

@@ -56,6 +56,7 @@ public class CommunityController {
                                                 @RequestParam(required = false) String status,
                                                 @RequestParam(required = false) String enumFilter,
                                                 @RequestParam(required = false) String search) {
+        log.info("Status: " + status);  // "ACTIVE"로 잘 전달되는지 확인
         return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter, search));
     }
 
