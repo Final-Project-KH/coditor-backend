@@ -25,10 +25,9 @@ public class CommunityController {
 
     // 게시판별 단일 글 작성시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @PostMapping("/new/post")
-    ResponseEntity<Boolean> createPost(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestBody BoardRequest boardRequest,
+    ResponseEntity<Boolean> createPost(@RequestBody BoardRequest boardRequest,
                                        @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.createPost(authorizationHeader, boardRequest, boardType));
+        return ResponseEntity.ok(communityService.createPost(boardRequest, boardType));
     }
 
     // 게시판별 단일 글 수정시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
