@@ -66,6 +66,12 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.listOneById(id));
     }
 
+    // 단순 조회수 올리기
+    @GetMapping("/list/one/check")
+    ResponseEntity<Boolean> listOneCheck(@RequestParam long id) {
+        return ResponseEntity.ok(communityService.listOneByIdCheck(id));
+    }
+
     // 게시글 내 댓글 확인
     @GetMapping("/list/comment")
     ResponseEntity<Page<CommentResponse>> listComment(@RequestParam Long boardId,
