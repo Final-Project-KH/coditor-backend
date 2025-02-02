@@ -42,6 +42,7 @@ public class BoardResponse {
         return BoardResponse.builder()
                 .boardId(board.getId())
                 .name(board.getUser().getNickname())
+                .profileUrl(board.getUser().getProfileUrl())
                 .title(board.getTitle())
                 .content(board.getContent())
                 .createdAt(board.getCreatedAt())

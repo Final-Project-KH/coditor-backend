@@ -131,4 +131,14 @@ public class CommunityController {
     public ResponseEntity<List<BoardResponse>> weeklyPopularPost() {
         return ResponseEntity.ok(communityService.getWeeklyPopularPost());
     }
+
+    // 상대방의 아이디를 클릭 했을때 상대방의 게시글 목록 요청 / 응답
+    @GetMapping("/list/others")
+    public ResponseEntity<Page<BoardResponse>> listOthers(@RequestParam Long userId,
+                                                          @RequestParam(defaultValue = "1") int page,
+                                                          @RequestParam(defaultValue = "10") int size,
+                                                          @RequestParam(required = false) String sortBy,
+                                                          @RequestParam(required = false) String order) {
+        return ResponseEntity.ok(communityService.listOthers(userId, page, size, sortBy, order));
+    }
 }

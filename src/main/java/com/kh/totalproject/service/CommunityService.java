@@ -27,9 +27,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -333,7 +335,7 @@ public class CommunityService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
 
         increaseViewCnt(board); // 조회수 증가
-        
+
         return true;
     }
 
@@ -395,7 +397,7 @@ public class CommunityService {
         Page<Comment> comments = commentRepository.findByBoardId(boardId, pageable);
         return comments.map(CommentResponse::ofAllComment);
     }
-    
+
     // 게시글 내 댓글 생성
     public Boolean addComment(String authorizationHeader, CommentRequest commentRequest) {
         try {
@@ -549,5 +551,26 @@ public class CommunityService {
                         (String) result[2]           // 프로필 사진 URL
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public Page<BoardResponse> listOthers(Long userId, int page, int size, String sortBy, String order) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+            if (sortBy == null || sortBy.isEmpty()) {
+                sortBy = "createdAt";  // 기본적으로 최신순
+            }
+            if (order == null || order.isEmpty()) {
+                order = "DESC";  // 기본적으로 내림차순
+            }
+            Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+            Pageable pageable = PageRequest.of(page - 1, size, sort);
+            Page<Board> boards = boardRepository.findByUserKey(user.getUserKey(), pageable);
+            return boards.map(BoardResponse::ofMyPost);
+        } catch (BadCredentialsException e) {
+            log.info("잘못된 요청입니다.", e);
+        }
+        // 추후에 404 NOT FOUND 로 대체 할 예정
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "게시글 목록을 불러올 수 없습니다.");
     }
 }
