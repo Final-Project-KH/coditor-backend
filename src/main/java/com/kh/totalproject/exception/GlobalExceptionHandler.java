@@ -1,10 +1,12 @@
 package com.kh.totalproject.exception;
 
-import com.kh.totalproject.dto.response.ExecuteCodeResponse;
+import com.kh.totalproject.dto.response.CancelJobResponse;
+import com.kh.totalproject.dto.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.response.SubmitCodeResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -27,18 +29,26 @@ public class GlobalExceptionHandler {
         }}, HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     * 유저의 코딩 테스트 관련 요청을 처리하는 과정에서
+     * Flask -> Spring Boot 4XX 응답 코드 처리
+     */
     @ExceptionHandler(CustomHttpClientErrorException.class)
     public ResponseEntity<Object> handleHttpClientErrorException(CustomHttpClientErrorException ex) {
         // Flask 에서 4xx response 수신 시 처리
         int statusCode = ex.getStatusCode().value();
         String url = ex.getRequestUrl();
 
-        if (url.contains("/api/code-challenge/submit")) {
+        if (url.contains("/job/create")) {
             return this.handleSubmitError(statusCode);
         }
 
-        else if (url.contains("/api/code-challenge/execute")) {
+        else if (url.contains("/job/execute")) {
             return this.handleExecuteError(statusCode);
+        }
+
+        else if (url.contains("/job/cancel")) {
+            return this.handleCancelError(statusCode);
         }
 
         return ResponseEntity.internalServerError().body(
@@ -46,9 +56,37 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 유저의 코딩 테스트 submit 요청에 대해서,
-     * Spring Boot <-> Flask 통신 중 4XX 응답을 처리하는 메서드
+     * 유저의 코딩 테스트 관련 요청을 처리하는 과정에서
+     * Flask -> Spring Boot 5XX 응답 코드 처리
      */
+    @ExceptionHandler(CustomHttpServerErrorException.class)
+    public ResponseEntity<Object> handleHttpServerErrorException(CustomHttpServerErrorException ex) {
+        log.error("Flask 내부에서 오류가 발생하였습니다.\n응답코드: {}\n예외 메시지: {}", ex.getStatusCode().value(), ex.getMessage());
+
+        return ResponseEntity.internalServerError().body(
+            Map.of("error", "서버 내부에서 알 수 없는 오류가 발생하였습니다.")
+        );
+    }
+
+    @ExceptionHandler(InvalidResponseBodyException.class)
+    public ResponseEntity<Object> handleFlaskResponseIsNotValidException(InvalidResponseBodyException ex) {
+        log.error("InvalidResponseBodyException: {}", ex.getMessage());
+        return ResponseEntity.internalServerError().body(
+            Map.of("error", UNKNOWN_FLASK_ERROR_MESSAGE)
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(
+            Map.of("error", "잘못된 형식의 요청입니다.")
+        );
+    }
+
+
+    /***************************************
+     * 내부 Private Helper 메서드 시작
+     ***************************************/
     private ResponseEntity<Object> handleSubmitError(int statusCode) {
         String errorMessage = switch (statusCode) {
             case 400 -> "요청 본문이 유효하지 않습니다.";
@@ -65,10 +103,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /**
-     * 유저의 코딩 테스트 execute 요청에 대해서,
-     * Spring Boot <-> Flask 통신 중 4XX 응답을 처리하는 메서드
-     */
     private ResponseEntity<Object> handleExecuteError(int statusCode) {
         String errorMessage = switch (statusCode) {
             case 400 -> "요청 본문이 유효하지 않습니다.";
@@ -77,27 +111,25 @@ public class GlobalExceptionHandler {
         };
 
         return ResponseEntity.status(statusCode).body(
-                ExecuteCodeResponse.builder()
+                ExecuteJobResponse.builder()
                         .numOfTestcase(null)
                         .error(errorMessage)
                         .build()
         );
     }
 
-    @ExceptionHandler(CustomHttpServerErrorException.class)
-    public ResponseEntity<Object> handleHttpServerErrorException(CustomHttpServerErrorException ex) {
-        log.error("Flask 내부에서 오류가 발생하였습니다.\n응답코드: {}\n예외 메시지: {}", ex.getStatusCode().value(), ex.getMessage());
+    private ResponseEntity<Object> handleCancelError(int statusCode) {
+        String errorMessage = switch (statusCode) {
+            case 400 -> "요청 본문이 유효하지 않습니다.";
+            case 404 -> "작업 정보가 존재하지 않습니다.";
+            default -> UNKNOWN_FLASK_ERROR_MESSAGE;
+        };
 
-        return ResponseEntity.internalServerError().body(
-            Map.of("error", "서버 내부에서 알 수 없는 오류가 발생하였습니다.")
-        );
-    }
-
-    @ExceptionHandler(InvalidResponseBodyException.class)
-    public ResponseEntity<Object> handleFlaskResponseIsNotValidException(InvalidResponseBodyException ex) {
-        log.error("InvalidResponseBodyException: {}", ex.getMessage());
-        return ResponseEntity.internalServerError().body(
-            Map.of("error", UNKNOWN_FLASK_ERROR_MESSAGE)
+        return ResponseEntity.badRequest().body(
+                CancelJobResponse.builder()
+                        .success(false)
+                        .error(errorMessage)
+                        .build()
         );
     }
 }

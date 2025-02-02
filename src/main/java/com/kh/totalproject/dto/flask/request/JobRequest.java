@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ExecuteJobRequest {
+public class JobRequest {
     private String jobId;
     private Long userId;
 }

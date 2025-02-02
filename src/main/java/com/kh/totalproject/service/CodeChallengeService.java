@@ -2,8 +2,7 @@ package com.kh.totalproject.service;
 
 import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.flask.callback.TestcaseResult;
-import com.kh.totalproject.dto.flask.request.DeleteJobRequest;
-import com.kh.totalproject.dto.flask.request.ExecuteJobRequest;
+import com.kh.totalproject.dto.flask.request.JobRequest;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
 import com.kh.totalproject.exception.CustomHttpClientErrorException;
 import com.kh.totalproject.exception.CustomHttpServerErrorException;
@@ -116,7 +115,7 @@ public class CodeChallengeService {
     }
 
     public int executeJob(String jobId, Long userId) {
-        ExecuteJobRequest request = ExecuteJobRequest.builder()
+        JobRequest request = JobRequest.builder()
                 .jobId(jobId)
                 .userId(userId)
                 .build();
@@ -129,8 +128,17 @@ public class CodeChallengeService {
         return (int) responseData.get("numOfTestcase");
     }
 
+    public void cancelJob(String jobId, Long userId) {
+        JobRequest request = JobRequest.builder()
+                .jobId(jobId)
+                .userId(userId)
+                .build();
+
+        sendRequestToFlask(FLASK_URL + "/job/cancel", request, HttpMethod.POST);
+    }
+
     public void deleteJob(String jobId, Long userId) {
-        DeleteJobRequest request = DeleteJobRequest.builder()
+        JobRequest request = JobRequest.builder()
                 .jobId(jobId)
                 .userId(userId)
                 .build();
