@@ -25,10 +25,9 @@ public class CommunityController {
 
     // 게시판별 단일 글 작성시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @PostMapping("/new/post")
-    ResponseEntity<Boolean> createPost(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestBody BoardRequest boardRequest,
+    ResponseEntity<Boolean> createPost(@RequestBody BoardRequest boardRequest,
                                        @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.createPost(authorizationHeader, boardRequest, boardType));
+        return ResponseEntity.ok(communityService.createPost(boardRequest, boardType));
     }
 
     // 게시판별 단일 글 수정시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
@@ -57,6 +56,7 @@ public class CommunityController {
                                                 @RequestParam(required = false) String status,
                                                 @RequestParam(required = false) String enumFilter,
                                                 @RequestParam(required = false) String search) {
+        log.info("Status: " + status);  // "ACTIVE"로 잘 전달되는지 확인
         return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter, search));
     }
 
@@ -64,6 +64,12 @@ public class CommunityController {
     @GetMapping("/list/one")
     ResponseEntity<BoardResponse> listOne(@RequestParam long id) {
         return ResponseEntity.ok(communityService.listOneById(id));
+    }
+
+    // 단순 조회수 올리기
+    @GetMapping("/list/one/check")
+    ResponseEntity<Boolean> listOneCheck(@RequestParam long id) {
+        return ResponseEntity.ok(communityService.listOneByIdCheck(id));
     }
 
     // 게시글 내 댓글 확인
@@ -124,5 +130,15 @@ public class CommunityController {
     @GetMapping("/weeklyPopularPost")
     public ResponseEntity<List<BoardResponse>> weeklyPopularPost() {
         return ResponseEntity.ok(communityService.getWeeklyPopularPost());
+    }
+
+    // 상대방의 아이디를 클릭 했을때 상대방의 게시글 목록 요청 / 응답
+    @GetMapping("/list/others")
+    public ResponseEntity<Page<BoardResponse>> listOthers(@RequestParam Long userId,
+                                                          @RequestParam(defaultValue = "1") int page,
+                                                          @RequestParam(defaultValue = "10") int size,
+                                                          @RequestParam(required = false) String sortBy,
+                                                          @RequestParam(required = false) String order) {
+        return ResponseEntity.ok(communityService.listOthers(userId, page, size, sortBy, order));
     }
 }

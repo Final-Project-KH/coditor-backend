@@ -1,5 +1,6 @@
 package com.kh.totalproject.repository;
 
+import com.kh.totalproject.constant.BoardType;
 import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.entity.Board;
 import org.springframework.data.domain.Page;
@@ -20,13 +21,13 @@ import java.util.Optional;
 public interface BoardRepository extends JpaRepository<Board, Long>, JpaSpecificationExecutor<Board> {
     long countByUserUserKey(Long userId);
 
-    @Query("SELECT b.user.nickname, COUNT(b) " +
+    @Query("SELECT b.user.nickname, b.user.profileUrl, COUNT(b) " +
             "FROM Board b " +
-            "GROUP BY b.user.nickname " +
+            "GROUP BY b.user.nickname, b.user.profileUrl " +
             "ORDER BY COUNT(b) DESC")
     List<Object[]> findTopUsersByPostCount(Pageable pageable);
 
-    @Query("SELECT b, b.user.nickname " +
+    @Query("SELECT b, b.user.nickname, b.user.profileUrl " +
             "FROM Board b " +
             "WHERE b.createdAt BETWEEN :startDate AND :endDate " +
             "ORDER BY (b.likeCnt * 0.7 + b.viewCnt * 0.3) DESC")

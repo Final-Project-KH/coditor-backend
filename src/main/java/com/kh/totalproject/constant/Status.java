@@ -6,13 +6,4 @@ import lombok.Getter;
 public enum Status {
     ACTIVE,
     INACTIVE;
-
-
-    public static Status fromString(String status) {
-        try {
-            return Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("잘못된 Stat 타입입니다: " + status);
-        }
-    }
 }

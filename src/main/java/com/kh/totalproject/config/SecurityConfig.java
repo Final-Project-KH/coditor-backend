@@ -55,8 +55,9 @@ public class SecurityConfig {
                                 "/auth/forgotid/**",
                                 "/auth/google",
                                 "/community/list/all",
-
+                                "/community/list/others",
                                 "/community/list/one",
+                                "/community/list/one/check",
                                 "/community/list/comment",
                                 "/community/topWriter",
                                 "/community/weeklyPopularPost",
