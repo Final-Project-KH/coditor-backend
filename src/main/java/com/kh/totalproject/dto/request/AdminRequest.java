@@ -22,7 +22,7 @@ public class AdminRequest { // 관리자 회원가입 Request Dto
     // userStatus 값이 null 만 아니면 자동으로 Admin 권한으로 계정 생성됨
     
     // Admin 저장 시 password 는 암호화하여 데이터베이스 저장
-    public User toEntity(PasswordEncoder passwordEncoder){
+    public User toJoinAsAdmin(PasswordEncoder passwordEncoder){
         return User.builder()
                 .userId(userId)
                 .password(passwordEncoder.encode(password))

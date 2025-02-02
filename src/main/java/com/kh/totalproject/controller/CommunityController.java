@@ -14,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -23,10 +25,9 @@ public class CommunityController {
 
     // 게시판별 단일 글 작성시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @PostMapping("/new/post")
-    ResponseEntity<Boolean> createPost(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestBody BoardRequest boardRequest,
+    ResponseEntity<Boolean> createPost(@RequestBody BoardRequest boardRequest,
                                        @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.createPost(authorizationHeader, boardRequest, boardType));
+        return ResponseEntity.ok(communityService.createPost(boardRequest, boardType));
     }
 
     // 게시판별 단일 글 수정시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
@@ -53,23 +54,32 @@ public class CommunityController {
                                                 @RequestParam(required = false) String sortBy,
                                                 @RequestParam(required = false) String order,
                                                 @RequestParam(required = false) String status,
-                                                @RequestParam(required = false) String enumFilter) {
-        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter));
+                                                @RequestParam(required = false) String enumFilter,
+                                                @RequestParam(required = false) String search) {
+        log.info("Status: " + status);  // "ACTIVE"로 잘 전달되는지 확인
+        return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter, search));
     }
 
     // 게시판별 단일 게시글 조회시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @GetMapping("/list/one")
-    ResponseEntity<BoardResponse> listOne(@RequestParam long id, @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.listOneByBoardType(id, boardType));
+    ResponseEntity<BoardResponse> listOne(@RequestParam long id) {
+        return ResponseEntity.ok(communityService.listOneById(id));
+    }
+
+    // 단순 조회수 올리기
+    @GetMapping("/list/one/check")
+    ResponseEntity<Boolean> listOneCheck(@RequestParam long id) {
+        return ResponseEntity.ok(communityService.listOneByIdCheck(id));
     }
 
     // 게시글 내 댓글 확인
     @GetMapping("/list/comment")
-    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam(defaultValue = "1") int page,
+    ResponseEntity<Page<CommentResponse>> listComment(@RequestParam Long boardId,
+                                                      @RequestParam(defaultValue = "1") int page,
                                                       @RequestParam(defaultValue = "10") int size,
                                                       @RequestParam(defaultValue = "createdAt") String sortBy,
                                                       @RequestParam(defaultValue = "DESC") String order) {
-        return ResponseEntity.ok(communityService.listComment(page, size, sortBy, order));
+        return ResponseEntity.ok(communityService.listComment(boardId, page, size, sortBy, order));
     }
 
     // 댓글 생성
@@ -93,6 +103,7 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.deleteComment(authorizationHeader, id));
     }
 
+    // 게시글 내 좋아요 싫어요 클릭시 요청 / 응답
     @PostMapping("/reaction/voting")
     public ResponseEntity<?> toggleReaction(@RequestParam Long boardId,
                                             @RequestParam Long userId,
@@ -101,10 +112,33 @@ public class CommunityController {
         return ResponseEntity.ok().build();
     }
 
+    // 유저별 좋아요 싫어요 상태
     @GetMapping("/reaction/status")
     public ResponseEntity<BoardReactionResponse> getReactionStatus(@RequestParam Long boardId,
                                                                    @RequestParam Long userId) {
         BoardReactionResponse reactionStatus = communityService.getReactionStatus(boardId, userId);
         return ResponseEntity.ok(reactionStatus);
+    }
+
+    // 게시판에서 TopWriter 요청 / 응답
+    @GetMapping("/topWriter")
+    public ResponseEntity<List<BoardResponse>> getTopWriterBoard() {
+        return ResponseEntity.ok(communityService.getTopWriterBoard());
+    }
+
+    // 주간 인기글 요청 / 응답
+    @GetMapping("/weeklyPopularPost")
+    public ResponseEntity<List<BoardResponse>> weeklyPopularPost() {
+        return ResponseEntity.ok(communityService.getWeeklyPopularPost());
+    }
+
+    // 상대방의 아이디를 클릭 했을때 상대방의 게시글 목록 요청 / 응답
+    @GetMapping("/list/others")
+    public ResponseEntity<Page<BoardResponse>> listOthers(@RequestParam Long userId,
+                                                          @RequestParam(defaultValue = "1") int page,
+                                                          @RequestParam(defaultValue = "10") int size,
+                                                          @RequestParam(required = false) String sortBy,
+                                                          @RequestParam(required = false) String order) {
+        return ResponseEntity.ok(communityService.listOthers(userId, page, size, sortBy, order));
     }
 }

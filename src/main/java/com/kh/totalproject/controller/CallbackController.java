@@ -1,6 +1,6 @@
 package com.kh.totalproject.controller;
 
-import com.kh.totalproject.constant.SseSendResultStatus;
+import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.flask.callback.TestcaseResult;
 import com.kh.totalproject.service.CodeChallengeService;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +18,15 @@ public class CallbackController {
 
     @PostMapping("/notify-testcase-result")
     public ResponseEntity<Void> receiveResult(@RequestBody TestcaseResult dto) {
-        SseSendResultStatus status = codeChallengeService.sendTestcaseResult(dto.getJobId(), dto);
+        SendTestcaseResultStatus status = codeChallengeService.sendTestcaseResult(dto.getJobId(), dto);
 
         switch(status) {
             case SUCCESS:
                 return ResponseEntity.ok().build();
             case CLIENT_NOT_FOUND:
                 return ResponseEntity.notFound().build();
+            case GONE:
+                return ResponseEntity.status(410).build();
             default:
                 return ResponseEntity.internalServerError().build();
         }

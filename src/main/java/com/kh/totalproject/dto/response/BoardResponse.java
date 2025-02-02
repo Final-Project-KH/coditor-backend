@@ -14,16 +14,20 @@ import java.util.List;
 @Builder
 public class BoardResponse {
     private Long boardId;
+    private Long userKey;
     private String name;
     private String title;
     private String content;
+    private String profileUrl;
     private String imgUrl;
+    private BoardType boardType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int viewCnt;
     private int commentCnt;
     private int likeCnt;
     private int dislikeCnt;
+    private long postCnt;
     private Status status;
     private List<String> language;
     private List<String> course;
@@ -34,20 +38,27 @@ public class BoardResponse {
     private List<CommentResponse> comments;
 
     // 내정보에서 내가 쓴 글을 확인 하기 위한 매핑
-//    public static BoardResponse ofMyPost(Board board) {
-//        return BoardResponse.builder()
-//                .boardId(board.getId())
-//                .title(board.getTitle())
-//                .content(board.getContent())
-//                .createdAt(board.getCreatedAt())
-//                .build();
-//    }
+    public static BoardResponse ofMyPost(Board board) {
+        return BoardResponse.builder()
+                .boardId(board.getId())
+                .name(board.getUser().getNickname())
+                .profileUrl(board.getUser().getProfileUrl())
+                .title(board.getTitle())
+                .content(board.getContent())
+                .createdAt(board.getCreatedAt())
+                .updatedAt(board.getUpdatedAt())
+                .boardType(board.getBoardType())
+                .viewCnt(board.getViewCnt())
+                .commentCnt(board.getCommentCnt())
+                .build();
+    }
 
     // 코딩질문 게시판 전체 보여주는 매핑
     public static BoardResponse ofAllCodingBoard(CodingBoard codingBoard, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(codingBoard.getId())
                 .name(codingBoard.getUser().getNickname())
+                .profileUrl(codingBoard.getUser().getProfileUrl())
                 .title(codingBoard.getTitle())
                 .content(codingBoard.getContent())
                 .createdAt(codingBoard.getCreatedAt())
@@ -66,6 +77,7 @@ public class BoardResponse {
         return BoardResponse.builder()
                 .boardId(courseBoard.getId())
                 .name(courseBoard.getUser().getNickname())
+                .profileUrl(courseBoard.getUser().getProfileUrl())
                 .title(courseBoard.getTitle())
                 .content(courseBoard.getContent())
                 .createdAt(courseBoard.getCreatedAt())
@@ -83,6 +95,7 @@ public class BoardResponse {
         return BoardResponse.builder()
                 .boardId(studyBoard.getId())
                 .name(studyBoard.getUser().getNickname())
+                .profileUrl(studyBoard.getUser().getProfileUrl())
                 .title(studyBoard.getTitle())
                 .content(studyBoard.getContent())
                 .createdAt(studyBoard.getCreatedAt())
@@ -101,6 +114,7 @@ public class BoardResponse {
         return BoardResponse.builder()
                 .boardId(teamBoard.getId())
                 .name(teamBoard.getUser().getNickname())
+                .profileUrl(teamBoard.getUser().getProfileUrl())
                 .title(teamBoard.getTitle())
                 .content(teamBoard.getContent())
                 .createdAt(teamBoard.getCreatedAt())
@@ -114,10 +128,12 @@ public class BoardResponse {
                 .build();
     }
 
-    public static BoardResponse ofOneCodingPost(CodingBoard codingBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneCodingPost(CodingBoard codingBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(codingBoard.getId())
+                .userKey(codingBoard.getUser().getUserKey())
                 .name(codingBoard.getUser().getNickname())
+                .profileUrl(codingBoard.getUser().getProfileUrl())
                 .title(codingBoard.getTitle())
                 .content(codingBoard.getContent())
                 .imgUrl(codingBoard.getImgUrl())
@@ -128,14 +144,17 @@ public class BoardResponse {
                 .viewCnt(codingBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneCoursePost(CourseBoard courseBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneCoursePost(CourseBoard courseBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(courseBoard.getId())
+                .userKey(courseBoard.getUser().getUserKey())
                 .name(courseBoard.getUser().getNickname())
+                .profileUrl(courseBoard.getUser().getProfileUrl())
                 .title(courseBoard.getTitle())
                 .content(courseBoard.getContent())
                 .imgUrl(courseBoard.getImgUrl())
@@ -145,14 +164,17 @@ public class BoardResponse {
                 .viewCnt(courseBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneStudyPost(StudyBoard studyBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneStudyPost(StudyBoard studyBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(studyBoard.getId())
+                .userKey(studyBoard.getUser().getUserKey())
                 .name(studyBoard.getUser().getNickname())
+                .profileUrl(studyBoard.getUser().getProfileUrl())
                 .title(studyBoard.getTitle())
                 .content(studyBoard.getContent())
                 .imgUrl(studyBoard.getImgUrl())
@@ -163,14 +185,17 @@ public class BoardResponse {
                 .viewCnt(studyBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
                 .build();
     }
 
-    public static BoardResponse ofOneTeamPost(TeamBoard teamBoard, int commentCnt, int likeCnt, int dislikeCnt) {
+    public static BoardResponse ofOneTeamPost(TeamBoard teamBoard, int postCntByUser, int commentCnt, int likeCnt, int dislikeCnt) {
         return BoardResponse.builder()
                 .boardId(teamBoard.getId())
+                .userKey(teamBoard.getUser().getUserKey())
                 .name(teamBoard.getUser().getNickname())
+                .profileUrl(teamBoard.getUser().getProfileUrl())
                 .title(teamBoard.getTitle())
                 .content(teamBoard.getContent())
                 .imgUrl(teamBoard.getImgUrl())
@@ -181,7 +206,26 @@ public class BoardResponse {
                 .viewCnt(teamBoard.getViewCnt())
                 .likeCnt(likeCnt)
                 .dislikeCnt(dislikeCnt)
+                .postCnt(postCntByUser)
                 .commentCnt(commentCnt)
+                .build();
+    }
+
+    public static BoardResponse ofTopWriterBoard(String profileUrl, String nickname, long postCntByUser) {
+        return BoardResponse.builder()
+                .profileUrl(profileUrl)
+                .name(nickname)
+                .postCnt(postCntByUser)
+                .build();
+    }
+
+    public static BoardResponse ofWeeklyPopularPost(Board board, String profileUrl, String nickname) {
+        return BoardResponse.builder()
+                .boardId(board.getId())
+                .title(board.getTitle())
+                .profileUrl(profileUrl)
+                .name(nickname)
+                .boardType(board.getBoardType())
                 .build();
     }
 }

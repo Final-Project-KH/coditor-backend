@@ -3,7 +3,6 @@ package com.kh.totalproject.service;
 import com.kh.totalproject.dto.MailBody;
 import com.kh.totalproject.dto.request.LoginRequest;
 import com.kh.totalproject.dto.request.AdminRequest;
-import com.kh.totalproject.dto.request.TokenRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.TokenResponse;
 import com.kh.totalproject.dto.response.UserResponse;
@@ -66,7 +65,7 @@ public class AuthService {
                     .build();
             token.setUser(user);
             tokenRepository.save(token);
-            return TokenResponse.ofAccessToken(tokenResponse);
+            return TokenResponse.ofAccessToken(tokenResponse, user);
         }
         else log.warn("비밀번호가 일치하지 않습니다.");
         throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
@@ -101,6 +100,7 @@ public class AuthService {
         return TokenResponse.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
+                .profileUrl(user.getProfileUrl())
                 .build();
     }
 
@@ -264,7 +264,7 @@ public class AuthService {
 
     // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
     public UserResponse saveAdmin(AdminRequest requestDto){
-        User user = requestDto.toEntity(passwordEncoder);
-        return UserResponse.ofAll(userRepository.save(user));
+        User user = requestDto.toJoinAsAdmin(passwordEncoder);
+        return UserResponse.ofMyProfile(userRepository.save(user));
     }
 }

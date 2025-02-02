@@ -55,12 +55,16 @@ public class SecurityConfig {
                                 "/auth/forgotid/**",
                                 "/auth/google",
                                 "/community/list/all",
-
+                                "/community/list/others",
                                 "/community/list/one",
+                                "/community/list/one/check",
                                 "/community/list/comment",
-
+                                "/community/topWriter",
+                                "/community/weeklyPopularPost",
+                                "/community/reaction/status",
                                 "/community/new/post", // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
-                                "/callback/**" // 임시
+                                "/api/code-challenge/subscribe",
+                                "/callback/**"
                         ).permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )

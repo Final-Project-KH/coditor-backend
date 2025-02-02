@@ -1,20 +1,21 @@
 package com.kh.totalproject.controller;
 
-import com.kh.totalproject.dto.flask.response.CreateJobResponse;
-import com.kh.totalproject.dto.flask.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
-import com.kh.totalproject.dto.response.ExecuteCodeResponse;
+import com.kh.totalproject.dto.response.CancelJobResponse;
+import com.kh.totalproject.dto.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.response.SubmitCodeResponse;
 import com.kh.totalproject.service.CodeChallengeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
+import java.util.Map;
 
 import static com.kh.totalproject.util.SecurityUtil.getCurrentUserIdOrThrow;
 
@@ -30,18 +31,16 @@ public class CodeChallengeController {
             @RequestBody SubmitCodeRequest dto
     ) {
         dto.setUserId(getCurrentUserIdOrThrow());
-        CreateJobResponse result = codeChallengeService.submit(dto);
-        return ResponseEntity.status(result.getStatus()).body(
+        String jobId = codeChallengeService.createJob(dto);
+
+        // 2분 30초 수명 설정
+        codeChallengeService.addSubscription(jobId, new SseEmitter(150_000L));
+        return ResponseEntity.ok().body(
                 SubmitCodeResponse.builder()
-                        .jobId(result.getJobId())
-                        .error(result.getError())
+                        .jobId(jobId)
+                        .error(null)
                         .build()
         );
-    }
-
-    @GetMapping("/before-subscribe")
-    public ResponseEntity<Void> beforeSubscribe() {
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -49,47 +48,99 @@ public class CodeChallengeController {
             HttpServletRequest request,
             @RequestParam String jobId
     ) {
-        Long userId = getCurrentUserIdOrThrow();
-        Integer lastEventId = null;
-        if (request.getHeader("Last-Event-ID") != null) lastEventId = Integer.parseInt(request.getHeader("Last-Event-ID"));
+        if (jobId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
-        SseEmitter emitter = new SseEmitter(180_000L); // 3분 타임아웃
-        codeChallengeService.addSubscription(jobId, emitter);
+        SseEmitter emitter = codeChallengeService.getEmitter(jobId);
+        if (emitter == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        // Last-Event-ID 헤더 처리 (재연결 시 사용)
+        // 구현 X
+//        Integer lastEventId = null;
+//        String lastEventHeader = request.getHeader("Last-Event-ID");
+//        if (lastEventHeader != null && !lastEventHeader.isEmpty()) {
+//            try {
+//                lastEventId = Integer.parseInt(lastEventHeader);
+//            } catch (NumberFormatException e) {
+//                // 잘못된 형식의 값은 무시
+//                log.warn("Invalid Last-Event-ID: {}", lastEventHeader);
+//            }
+//        }
+
         emitter.onCompletion(() -> {
-            log.info("SSE Stream completed for jobId: {}", jobId);
-            codeChallengeService.removeSubscription(jobId, emitter);
+            log.info("SSE Stream completed for job id: {}", jobId);
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
         emitter.onTimeout(() -> {
-            log.warn("SSE Stream timed out for jobId: {}", jobId);
-            codeChallengeService.removeSubscription(jobId, emitter);
+            log.warn("SSE Stream timed out for job id: {}", jobId);
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
-        emitter.onError((e) -> {
-            log.error("SSE Stream error for jobId: {}, error: {}", jobId, e.getMessage());
-            codeChallengeService.removeSubscription(jobId, emitter);
+        emitter.onError(e -> {
+            log.warn("SSE error for job id: {}, error message: {}", jobId, e.getMessage());
+            codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
-        try {
-            emitter.send(SseEmitter.event().data("connected"));
-        } catch (IOException e) {
-            log.error("Failed to send init event", e);
-        }
+        codeChallengeService.sendSseMessage(
+            jobId,
+            emitter,
+            "Connection Established",
+            null
+        );
 
         return emitter;
     }
 
-    @GetMapping("/execute")
-    public ResponseEntity<ExecuteCodeResponse> executeJob(
-            @RequestParam(name = "jobid") String jobId
+    @PostMapping("/execute")
+    public ResponseEntity<ExecuteJobResponse> executeJob(
+        @RequestBody Map<String, String> body
     ) {
         Long userId = getCurrentUserIdOrThrow();
-        ExecuteJobResponse result = codeChallengeService.executeCode(jobId, userId);
+
+        String jobId = body.get("jobId");
+        if (jobId == null || jobId.isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    ExecuteJobResponse.builder()
+                            .numOfTestcase(null)
+                            .error("요청 본문에 \"jobId\"가 존재하지 않습니다")
+                            .build());
+        }
+
+        int numOfTestcase = codeChallengeService.executeJob(body.get("jobId"), userId);
         // 비정상인 경우 프론트는 SSE 연결을 종료
-        return ResponseEntity.status(result.getStatus()).body(
-                ExecuteCodeResponse.builder()
-                        .numOfTestcase(result.getNumOfTestcase())
-                        .error(result.getError())
+        return ResponseEntity.ok().body(
+                ExecuteJobResponse.builder()
+                        .numOfTestcase(numOfTestcase)
+                        .error(null)
                         .build());
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<CancelJobResponse> cancelJob(
+            @RequestBody Map<String, String> body
+    ) {
+        Long userId = getCurrentUserIdOrThrow();
+
+        String jobId = body.get("jobId");
+        if (jobId == null || jobId.isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    CancelJobResponse.builder()
+                            .success(false)
+                            .error("요청 본문에 \"jobId\"가 존재하지 않습니다")
+                            .build()
+            );
+        }
+
+        codeChallengeService.cancelJob(jobId, userId);
+        return ResponseEntity.ok().body(
+                CancelJobResponse.builder()
+                        .success(true)
+                        .error(null)
+                        .build()
+        );
     }
 }

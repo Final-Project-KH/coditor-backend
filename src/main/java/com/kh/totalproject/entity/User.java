@@ -23,6 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +42,7 @@ public class User {
     @Size(min = 5, max = 50, message = "이메일은 5자 이상, 50자 이하(영어 기준)")
     private String email;
 
-    @Column(nullable = true, length = 100)
+    @Column(nullable = true, length = 200)
     private String profileUrl;
     
     // 암호화 하기 때문에 max 값 255로 설정
@@ -62,15 +63,38 @@ public class User {
 
     // 게시판 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Board> boards = new ArrayList<>();
 
     // 댓글 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
     // 게시글 반응 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<BoardReaction> boardReactions = new ArrayList<>();
+
+    // 신고 게시판 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReportBoard> reportBoards  = new ArrayList<>();
+
+    // 신고 게시판에 해당하는 댓글 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReportComment> reportComments = new ArrayList<>();
+
+    // 건의사항 게시판 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SuggestionBoard> suggestionBoards = new ArrayList<>();
+
+    // 건의사항 게시판에 해당하는 댓글 연관관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SuggestionComment> suggestionComments = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

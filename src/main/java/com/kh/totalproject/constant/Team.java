@@ -10,7 +10,7 @@ public enum Team {
     DBA("DBA"),
     DBS("DBS"),
     DESIGNER("디자이너"),
-    ECT("기타");
+    ETC("기타");
     private final String displayName;
 
     Team(String displayName) {
