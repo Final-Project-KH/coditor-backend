@@ -26,9 +26,10 @@ public class CodeChallengeSubmission {
     // 1개의 문제는 n개의 제출을 가질 수 있고, 1개의 제출은 1개의 문제를 가진다.
     @ManyToOne
     @JoinColumn(nullable = false, name="question_id")
-    private CodeChallengeMeta codeChallengeMeta;
+    private CodeChallengeInfo codeChallengeInfo;
 
-    @Column(nullable = false)
+    @Lob
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String code;
 
     @Enumerated(EnumType.STRING)

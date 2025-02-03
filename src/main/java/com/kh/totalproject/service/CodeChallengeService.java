@@ -1,16 +1,19 @@
 package com.kh.totalproject.service;
 
+import com.google.api.Http;
+import com.kh.totalproject.constant.ChallengeDifficulty;
 import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.flask.callback.TestcaseResult;
 import com.kh.totalproject.dto.flask.request.JobRequest;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
-import com.kh.totalproject.entity.CodeChallengeMeta;
+import com.kh.totalproject.dto.response.ChallengeMetaResponse;
+import com.kh.totalproject.entity.CodeChallengeInfo;
 import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.exception.CustomHttpClientErrorException;
 import com.kh.totalproject.exception.CustomHttpServerErrorException;
 import com.kh.totalproject.exception.InvalidResponseBodyException;
-import com.kh.totalproject.repository.CodeChallengeMetaRepository;
+import com.kh.totalproject.repository.CodeChallengeInfoRepository;
 import com.kh.totalproject.repository.CodeChallengeSubmissionRepository;
 import com.kh.totalproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +44,7 @@ public class CodeChallengeService {
     // 추후 빈에 등록 후 서비스를 쪼개서 사용하는 것도 고려 중 입니다
     private final ConcurrentHashMap<String, SseEmitter> subscriptions = new ConcurrentHashMap<>();
     private final UserRepository userRepository;
-    private final CodeChallengeMetaRepository codeChallengeMetaRepository;
+    private final CodeChallengeInfoRepository codeChallengeInfoRepository;
     private final CodeChallengeSubmissionRepository codeChallengeSubmissionRepository;
 
     private final RestTemplate restTemplate;
@@ -83,11 +88,11 @@ public class CodeChallengeService {
             removeSubscriptionAndSetEmitterComplete(jobId);
 
             User user = userRepository.findById(result.getUserId()).orElse(null);
-            CodeChallengeMeta codeChallengeMeta = codeChallengeMetaRepository.findById(result.getQuestionId()).orElse(null);
+            CodeChallengeInfo codeChallengeInfo = codeChallengeInfoRepository.findById(result.getQuestionId()).orElse(null);
             codeChallengeSubmissionRepository.save(
                     CodeChallengeSubmission.builder()
                         .user(user)
-                        .codeChallengeMeta(codeChallengeMeta)
+                        .codeChallengeInfo(codeChallengeInfo)
                         .code(result.getCode())
                         .codeLanguage(result.getCodeLanguage())
                         .success(result.getSuccess())
@@ -220,9 +225,45 @@ public class CodeChallengeService {
         }
     }
 
-    public List<CodeChallengeSubmission> getSubmissions(Long userId) {
+    public CodeChallengeInfo getChallengeInfo(Long questionId) {
+        return codeChallengeInfoRepository.findById(questionId).orElse(null);
+    }
+    
+    public CodeChallengeSubmission getSubmissionHistory(Long userId, CodeChallengeInfo challengeInfo) {
+        User user = userRepository.findById(userId).orElse(null); // userId에 대한 유효성 검증이 끝났으므로 사실상 항상 조회 성공
+        if (user == null) { log.warn("존재하지 않는 회원이지만, 토큰에서 회원 번호 검증에는 통과하였음, userId={}", userId); return null; }
+        return codeChallengeSubmissionRepository.findByCodeChallengeInfoAndUser(challengeInfo, user).orElse(null);
+    }
+
+    public List<CodeChallengeSubmission> getSubmissionHistoryList(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         return codeChallengeSubmissionRepository.findByUser(user);
+    }
+
+    public List<ChallengeMetaResponse> getChallengeMetaList(ChallengeDifficulty difficulty, Long userId) {
+        List<CodeChallengeInfo> codeChallengeInfoList = codeChallengeInfoRepository.findByDifficulty(difficulty);
+        List<ChallengeMetaResponse> response = new ArrayList<>();
+
+        for (var challengeInfo: codeChallengeInfoList) {
+            int totalSubmissionCount = codeChallengeSubmissionRepository.countByCodeChallengeInfoAndSuccess(challengeInfo, true);
+            int challengePassCount = codeChallengeSubmissionRepository.countByCodeChallengeInfo(challengeInfo);
+
+            User user = userId == null ? null : userRepository.findById(userId).orElse(null);
+            Boolean passedBefore = user == null ? null : codeChallengeSubmissionRepository.countByCodeChallengeInfoAndUser(challengeInfo, user) >= 1;
+            response.add(
+                ChallengeMetaResponse.builder()
+                    .questionId(challengeInfo.getQuestionId())
+                    .title(challengeInfo.getTitle())
+                    .category(challengeInfo.getCategory())
+                    .difficulty(challengeInfo.getDifficulty())
+                    .passingRate(totalSubmissionCount == 0 ? 0.0f :
+                            Math.round((challengePassCount / (float) totalSubmissionCount) * 1000) / 10.0f)
+                    .passedBefore(passedBefore)
+                    .build()
+            );
+        }
+
+        return response;
     }
 
     private Map<String, Object> sendRequestToFlask(String url, Object body, HttpMethod method) {

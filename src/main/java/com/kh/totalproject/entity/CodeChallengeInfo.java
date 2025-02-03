@@ -10,7 +10,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class CodeChallengeMeta {
+public class CodeChallengeInfo {
     // 직접 관리 (data.sql 파일로 관리)
     @Id
     private Long questionId;
@@ -18,7 +18,19 @@ public class CodeChallengeMeta {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private String cond;
+
+    private String category;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengeDifficulty difficulty;
+
+    private Integer memoryLimit;
+
+    private Integer runningTimeLimit;
 }

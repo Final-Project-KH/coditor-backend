@@ -1,10 +1,12 @@
 package com.kh.totalproject.controller;
 
+import com.kh.totalproject.constant.ChallengeDifficulty;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
 import com.kh.totalproject.dto.response.CancelJobResponse;
+import com.kh.totalproject.dto.response.ChallengeMetaResponse;
 import com.kh.totalproject.dto.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.response.SubmitCodeResponse;
-import com.kh.totalproject.entity.CodeChallengeMeta;
+import com.kh.totalproject.entity.CodeChallengeInfo;
 import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.service.CodeChallengeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -147,10 +149,41 @@ public class CodeChallengeController {
         );
     }
 
-    @GetMapping("submissions")
-    public ResponseEntity<List<CodeChallengeSubmission>> getAllChallengeSubmission() {
+    @GetMapping("/submission/{questionId}")
+    public ResponseEntity<Object> getSubmissionHistory(
+        @PathVariable Long questionId
+    ) {
         Long userId = getCurrentUserIdOrThrow();
-        List<CodeChallengeSubmission> results = codeChallengeService.getSubmissions(userId);
+        CodeChallengeInfo challengeInfo = codeChallengeService.getChallengeInfo(questionId);
+        if (challengeInfo == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of("error", "존재하지 않는 코딩 테스트 문제입니다.")
+            );
+        }
+
+        CodeChallengeSubmission result = codeChallengeService.getSubmissionHistory(userId, challengeInfo);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/submissions")
+    public ResponseEntity<List<CodeChallengeSubmission>> getAllSubmissionHistory() {
+        Long userId = getCurrentUserIdOrThrow();
+        List<CodeChallengeSubmission> results = codeChallengeService.getSubmissionHistoryList(userId);
         return ResponseEntity.ok().body(results);
+    }
+
+    @GetMapping("/challenges/{difficulty}")
+    public ResponseEntity<List<ChallengeMetaResponse>> getAllChallengeMeta(
+        @PathVariable String difficulty,
+        @RequestParam(required = false, name = "user") Long userId
+    ) {
+        ChallengeDifficulty challengeDifficulty;
+        try {
+            challengeDifficulty = ChallengeDifficulty.valueOf(difficulty.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(List.of());
+        }
+        List<ChallengeMetaResponse> results = codeChallengeService.getChallengeMetaList(challengeDifficulty, userId);
+        return ResponseEntity.ok(results);
     }
 }
