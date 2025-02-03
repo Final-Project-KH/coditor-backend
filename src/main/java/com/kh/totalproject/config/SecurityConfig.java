@@ -61,7 +61,7 @@ public class SecurityConfig {
                                 "/community/list/comment",
                                 "/community/topWriter",
                                 "/community/weeklyPopularPost",
-
+                                "/community/reaction/status",
                                 "/community/new/post", // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
                                 "/api/code-challenge/subscribe",
                                 "/callback/**"
