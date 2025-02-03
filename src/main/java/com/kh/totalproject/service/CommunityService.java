@@ -541,8 +541,8 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
 
         return results.stream()
                 .map(result -> BoardResponse.ofTopWriterBoard(
-                        (String) result[0],         // 닉네임
-                        (String) result[1],         // 프로필 사진
+                        (String) result[1],         // 닉네임
+                        (String) result[0],         // 프로필 사진
                         ((Long) result[2]).intValue() // 게시글 개수
                 ))
                 .collect(Collectors.toList());
@@ -560,8 +560,8 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
         return results.stream()
                 .map(result -> BoardResponse.ofWeeklyPopularPost(
                         (Board) result[0],           // 게시글
-                        (String) result[1],          // 닉네임
-                        (String) result[2]           // 프로필 사진 URL
+                        (String) result[2],          // 닉네임
+                        (String) result[1]           // 프로필 사진 URL
                 ))
                 .collect(Collectors.toList());
     }

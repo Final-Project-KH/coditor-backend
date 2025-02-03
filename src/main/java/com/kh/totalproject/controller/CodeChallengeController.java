@@ -1,8 +1,11 @@
 package com.kh.totalproject.controller;
 
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
-import com.kh.totalproject.dto.response.ExecuteCodeResponse;
+import com.kh.totalproject.dto.response.CancelJobResponse;
+import com.kh.totalproject.dto.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.response.SubmitCodeResponse;
+import com.kh.totalproject.entity.CodeChallengeMeta;
+import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.service.CodeChallengeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
+import java.util.Map;
 
 import static com.kh.totalproject.util.SecurityUtil.getCurrentUserIdOrThrow;
 
@@ -29,7 +35,9 @@ public class CodeChallengeController {
     ) {
         dto.setUserId(getCurrentUserIdOrThrow());
         String jobId = codeChallengeService.createJob(dto);
-        codeChallengeService.addSubscription(jobId, new SseEmitter(180_000L));
+
+        // 2분 30초 수명 설정
+        codeChallengeService.addSubscription(jobId, new SseEmitter(150_000L));
         return ResponseEntity.ok().body(
                 SubmitCodeResponse.builder()
                         .jobId(jobId)
@@ -90,17 +98,59 @@ public class CodeChallengeController {
         return emitter;
     }
 
-    @GetMapping("/execute")
-    public ResponseEntity<ExecuteCodeResponse> executeJob(
-            @RequestParam(name = "jobid") String jobId
+    @PostMapping("/execute")
+    public ResponseEntity<ExecuteJobResponse> executeJob(
+        @RequestBody Map<String, String> body
     ) {
         Long userId = getCurrentUserIdOrThrow();
-        int numOfTestcase = codeChallengeService.executeJob(jobId, userId);
+
+        String jobId = body.get("jobId");
+        if (jobId == null || jobId.isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    ExecuteJobResponse.builder()
+                            .numOfTestcase(null)
+                            .error("요청 본문에 \"jobId\"가 존재하지 않습니다")
+                            .build());
+        }
+
+        int numOfTestcase = codeChallengeService.executeJob(body.get("jobId"), userId);
         // 비정상인 경우 프론트는 SSE 연결을 종료
         return ResponseEntity.ok().body(
-                ExecuteCodeResponse.builder()
+                ExecuteJobResponse.builder()
                         .numOfTestcase(numOfTestcase)
                         .error(null)
                         .build());
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<CancelJobResponse> cancelJob(
+            @RequestBody Map<String, String> body
+    ) {
+        Long userId = getCurrentUserIdOrThrow();
+
+        String jobId = body.get("jobId");
+        if (jobId == null || jobId.isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    CancelJobResponse.builder()
+                            .success(false)
+                            .error("요청 본문에 \"jobId\"가 존재하지 않습니다")
+                            .build()
+            );
+        }
+
+        codeChallengeService.cancelJob(jobId, userId);
+        return ResponseEntity.ok().body(
+                CancelJobResponse.builder()
+                        .success(true)
+                        .error(null)
+                        .build()
+        );
+    }
+
+    @GetMapping("submissions")
+    public ResponseEntity<List<CodeChallengeSubmission>> getAllChallengeSubmission() {
+        Long userId = getCurrentUserIdOrThrow();
+        List<CodeChallengeSubmission> results = codeChallengeService.getSubmissions(userId);
+        return ResponseEntity.ok().body(results);
     }
 }

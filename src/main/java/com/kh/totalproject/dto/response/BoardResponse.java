@@ -257,6 +257,7 @@ public class BoardResponse {
                 .title(board.getTitle())
                 .profileUrl(profileUrl)
                 .name(nickname)
+                .boardType(board.getBoardType())
                 .build();
     }
 }
