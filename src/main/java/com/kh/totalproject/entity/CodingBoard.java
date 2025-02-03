@@ -22,19 +22,12 @@ import java.util.List;
 @NoArgsConstructor
 public class CodingBoard extends Board {
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
-
     @Type(JsonType.class)
     @Column(columnDefinition = "json")
     private List<String> language;
 
     @PrePersist
     private void defaultValues() {
-        if (status == null) {
-            this.status = Status.ACTIVE;
-        }
-
         if (language == null) {
             this.language = new ArrayList<>();
         }
@@ -45,7 +38,7 @@ public class CodingBoard extends Board {
     public CodingBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
                        LocalDateTime updatedAt, Status status, List<String> language) {
         super(boardId, title, content, imgUrl, createdAt, updatedAt);
-        this.status = status;
+        this.setStatus(status);
         this.language = language;
         this.setUser(user);
         this.setBoardType(BoardType.CODING);

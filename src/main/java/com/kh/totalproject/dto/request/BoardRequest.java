@@ -31,7 +31,6 @@ public class BoardRequest {
                 .user(user)
                 .content(content)
                 .imgUrl(imgUrl)
-                .status(status)
                 .language(language)
                 .build();
     }
@@ -52,7 +51,6 @@ public class BoardRequest {
                 .user(user)
                 .content(content)
                 .imgUrl(imgUrl)
-                .status(status)
                 .study(study)
                 .build();
     }
@@ -63,7 +61,6 @@ public class BoardRequest {
                 .user(user)
                 .content(content)
                 .imgUrl(imgUrl)
-                .status(status)
                 .team(team)
                 .build();
     }
@@ -75,8 +72,8 @@ public class BoardRequest {
                 .user(user)
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
-                .status(status != null ? status : existingData.getStatus())
                 .language(language != null ? language : existingData.getLanguage())
+                .status(status != null ? status : existingData.getStatus())
                 .createdAt(existingData.getCreatedAt())
                 .build();
     }
@@ -100,7 +97,6 @@ public class BoardRequest {
                 .user(user)
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
-                .status(status != null ? status : existingData.getStatus())
                 .study(study != null ? study : existingData.getStudy())
                 .createdAt(existingData.getCreatedAt())
                 .build();
@@ -113,7 +109,6 @@ public class BoardRequest {
                 .user(user)
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
-                .status(status != null ? status : existingData.getStatus())
                 .team(team != null ? team : existingData.getTeam())
                 .createdAt(existingData.getCreatedAt())
                 .build();

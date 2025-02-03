@@ -21,8 +21,6 @@ import java.util.List;
 @NoArgsConstructor
 public class StudyBoard extends Board {
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
 
     @Type(JsonType.class)
     @Column(columnDefinition = "json")
@@ -30,9 +28,6 @@ public class StudyBoard extends Board {
 
     @PrePersist
     private void defaultValues() {
-        if (status == null) {
-            this.status = Status.ACTIVE;
-        }
 
         if (study == null) {
             this.study = new ArrayList<>();
@@ -43,7 +38,7 @@ public class StudyBoard extends Board {
     public StudyBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
                        LocalDateTime updatedAt, Status status, List<String> study) {
         super(boardId, title, content, imgUrl, createdAt, updatedAt);
-        this.status = status;
+        this.setStatus(status);
         this.study = study;
         this.setUser(user);
         this.setBoardType(BoardType.STUDY);

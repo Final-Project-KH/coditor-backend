@@ -58,11 +58,11 @@ public class AuthController {
     }
 
     // 회원가입 (관리자)
-    @PostMapping("/admin")
-    public ResponseEntity<UserResponse> handleSignUpAdmin(@RequestBody AdminRequest adminRequest) {
-        UserResponse responseDataDto = authService.saveAdmin(adminRequest);
-        return ResponseEntity.ok(responseDataDto);
-    }
+//    @PostMapping("/admin")
+//    public ResponseEntity<UserResponse> handleSignUpAdmin(@RequestBody AdminRequest adminRequest) {
+//        UserResponse responseDataDto = authService.saveAdmin(adminRequest);
+//        return ResponseEntity.ok(responseDataDto);
+//    }
 
     // 회원가입에 필요한 정보를 요청, 응답
     @PostMapping("/join")

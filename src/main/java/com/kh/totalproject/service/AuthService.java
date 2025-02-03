@@ -262,9 +262,9 @@ public class AuthService {
         return random.nextInt(100_000, 999_999);
     }
 
-    // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
-    public UserResponse saveAdmin(AdminRequest requestDto){
-        User user = requestDto.toJoinAsAdmin(passwordEncoder);
-        return UserResponse.ofMyProfile(userRepository.save(user));
-    }
+//    // 관리자 회원 가입 (반환 타입 - UserInfoResponse)
+//    public UserResponse saveAdmin(AdminRequest requestDto){
+//        User user = requestDto.toJoinAsAdmin(passwordEncoder);
+//        return UserResponse.ofMyProfile(userRepository.save(user));
+//    }
 }

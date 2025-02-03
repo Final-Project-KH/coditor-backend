@@ -44,6 +44,9 @@ public class User {
 
     @Column(nullable = true, length = 200)
     private String profileUrl;
+
+    @Column(nullable = true, length = 500)
+    private String introduction;
     
     // 암호화 하기 때문에 max 값 255로 설정
     @Column(nullable = false)

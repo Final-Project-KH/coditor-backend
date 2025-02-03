@@ -7,6 +7,7 @@ import com.kh.totalproject.dto.request.CommentRequest;
 import com.kh.totalproject.dto.response.BoardReactionResponse;
 import com.kh.totalproject.dto.response.BoardResponse;
 import com.kh.totalproject.dto.response.CommentResponse;
+import com.kh.totalproject.dto.response.UserResponse;
 import com.kh.totalproject.service.CommunityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +33,9 @@ public class CommunityController {
 
     // 게시판별 단일 글 수정시 게시판 type 을 전달 받아 서비스에서 해당 로직으로 연결
     @PutMapping("/modify/post")
-    ResponseEntity<Boolean> modifyPost(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestBody BoardRequest boardRequest,
+    ResponseEntity<Boolean> modifyPost(@RequestBody BoardRequest boardRequest,
                                        @RequestParam String boardType) {
-        return ResponseEntity.ok(communityService.modifyPost(authorizationHeader, boardRequest, boardType));
+        return ResponseEntity.ok(communityService.modifyPost(boardRequest, boardType));
     }
 
     // 게시글 삭제시 게시글 번호를 전달 받아 서비스에서 해당 로직으로 연결
@@ -133,12 +133,17 @@ public class CommunityController {
     }
 
     // 상대방의 아이디를 클릭 했을때 상대방의 게시글 목록 요청 / 응답
-    @GetMapping("/list/others")
-    public ResponseEntity<Page<BoardResponse>> listOthers(@RequestParam Long userId,
-                                                          @RequestParam(defaultValue = "1") int page,
-                                                          @RequestParam(defaultValue = "10") int size,
-                                                          @RequestParam(required = false) String sortBy,
-                                                          @RequestParam(required = false) String order) {
-        return ResponseEntity.ok(communityService.listOthers(userId, page, size, sortBy, order));
+    @GetMapping("/list/others/post")
+    public ResponseEntity<Page<BoardResponse>> listOthersPost(@RequestParam Long userId,
+                                                              @RequestParam(defaultValue = "1") int page,
+                                                              @RequestParam(defaultValue = "10") int size,
+                                                              @RequestParam(required = false) String sortBy,
+                                                              @RequestParam(required = false) String order) {
+        return ResponseEntity.ok(communityService.listOthersPost(userId, page, size, sortBy, order));
+    }
+
+    @GetMapping("/list/others/profile")
+    public ResponseEntity<UserResponse> listOthersProfile(@RequestParam Long userId) {
+        return ResponseEntity.ok(communityService.listOthersProfile(userId));
     }
 }
