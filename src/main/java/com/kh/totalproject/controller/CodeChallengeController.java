@@ -4,6 +4,8 @@ import com.kh.totalproject.dto.request.SubmitCodeRequest;
 import com.kh.totalproject.dto.response.CancelJobResponse;
 import com.kh.totalproject.dto.response.ExecuteJobResponse;
 import com.kh.totalproject.dto.response.SubmitCodeResponse;
+import com.kh.totalproject.entity.CodeChallengeMeta;
+import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.service.CodeChallengeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.kh.totalproject.util.SecurityUtil.getCurrentUserIdOrThrow;
@@ -142,5 +145,12 @@ public class CodeChallengeController {
                         .error(null)
                         .build()
         );
+    }
+
+    @GetMapping("submissions")
+    public ResponseEntity<List<CodeChallengeSubmission>> getAllChallengeSubmission() {
+        Long userId = getCurrentUserIdOrThrow();
+        List<CodeChallengeSubmission> results = codeChallengeService.getSubmissions(userId);
+        return ResponseEntity.ok().body(results);
     }
 }

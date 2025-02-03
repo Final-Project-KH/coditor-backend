@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +84,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // Spring -> Flask 요청 응답이 없을 시
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<Object> handleResourceAccessException(ResourceAccessException ex) {
+        return ResponseEntity.internalServerError().body(
+                Map.of("error", "현재 해당 요청을 처리할 수 없습니다. 잠시후 다시 시도해주십시오. 문제가 지속될 경우 관리자에게 문의 부탁드립니다.")
+        );
+    }
 
     /***************************************
      * 내부 Private Helper 메서드 시작
