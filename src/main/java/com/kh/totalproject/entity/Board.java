@@ -22,8 +22,7 @@ public class Board {
 
     private String title;
 
-    @Lob
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private int viewCnt = 0;
@@ -38,6 +37,9 @@ public class Board {
     @Enumerated(EnumType.STRING)
     private BoardType boardType;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     // 매개변수가 포함된 생성자는 @NoArgs 어노테이션으로 처리가 불가능 하므로 매개변수가 있는 생성자 명시
     public Board(Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = boardId;
@@ -50,9 +52,12 @@ public class Board {
 
     // 게시글 새로운 생성시 작동
     @PrePersist
-    public void defaultTime() {
+    public void defaultValue() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            this.status = Status.ACTIVE; // 기본값 설정
         }
     }
 

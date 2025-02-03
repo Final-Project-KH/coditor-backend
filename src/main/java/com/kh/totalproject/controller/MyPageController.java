@@ -50,12 +50,11 @@ public class MyPageController {
 
     // 내 정보에서 내가 작성한 글 보기
     @GetMapping("/post/list")
-    public ResponseEntity<Page<BoardResponse>> listMyPost(@RequestHeader("Authorization") String authorizationHeader,
-                                                          @RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<Page<BoardResponse>> listMyPost(@RequestParam(defaultValue = "1") int page,
                                                           @RequestParam(defaultValue = "10") int size,
                                                           @RequestParam(required = false) String sortBy,
                                                           @RequestParam(required = false) String order) {
-        return ResponseEntity.ok(myPageService.myPost(authorizationHeader, page, size, sortBy, order));
+        return ResponseEntity.ok(myPageService.myPost(page, size, sortBy, order));
     }
 
     // 내가 작성한 신고 작성 글 목록 보기 요청 / 응답

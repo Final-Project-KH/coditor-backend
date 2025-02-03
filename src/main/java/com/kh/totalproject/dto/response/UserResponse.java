@@ -17,21 +17,35 @@ public class UserResponse {
     private String userId;
     private String email;
     private String nickname;
+    private long postCnt;
     private Role role;
     private LocalDateTime registeredAt;
     private LocalDateTime updatedAt;
     private String profileUrl;
+    private String introduction;
 
     // 내정보 보기 읽기전용 OfAll
-    public static UserResponse ofMyProfile(User user) {
+    public static UserResponse ofMyProfile(User user, int postCntByUser) {
         return UserResponse.builder()
                 .userId(user.getUserId())
+                .postCnt(postCntByUser)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .role(user.getRole())
                 .registeredAt(user.getRegisteredAt())
                 .updatedAt(user.getUpdatedAt())
                 .profileUrl(user.getProfileUrl())
+                .introduction(user.getIntroduction())
+                .build();
+    }
+
+    public static UserResponse ofOtherUserProfile(User user, int postCntByUser) {
+        return UserResponse.builder()
+                .postCnt(postCntByUser)
+                .nickname(user.getNickname())
+                .registeredAt(user.getRegisteredAt())
+                .profileUrl(user.getProfileUrl())
+                .introduction(user.getIntroduction())
                 .build();
     }
 

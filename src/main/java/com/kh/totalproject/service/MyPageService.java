@@ -5,11 +5,10 @@ import com.kh.totalproject.dto.request.SuggestRequest;
 import com.kh.totalproject.dto.request.UserRequest;
 import com.kh.totalproject.dto.response.*;
 import com.kh.totalproject.entity.*;
-import com.kh.totalproject.repository.BoardRepository;
-import com.kh.totalproject.repository.ReportRepository;
-import com.kh.totalproject.repository.SuggestionRepository;
-import com.kh.totalproject.repository.UserRepository;
+import com.kh.totalproject.exception.ForbiddenException;
+import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
+import com.kh.totalproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +31,8 @@ public class MyPageService {
     private final PasswordEncoder passwordEncoder;
     private final BoardRepository boardRepository;
     private final ReportRepository reportRepository;
+    private final CommentRepository commentRepository;
+    private final BoardReactionRepository boardReactionRepository;
     private final SuggestionRepository suggestionRepository;
     private final JwtUtil jwtUtil;
 
@@ -42,7 +43,8 @@ public class MyPageService {
         Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
-        return UserResponse.ofMyProfile(user);
+        int postCntByUser = (int) boardRepository.countByUserUserKey(user.getUserKey());
+        return UserResponse.ofMyProfile(user, postCntByUser);
     }
 
     // 내 정보 수정
@@ -85,8 +87,11 @@ public class MyPageService {
     //     내 작성글 보기,
     //     내정보에서 열람을 할 수 있는 페이지 네이션으로 설정
     //     BoardId 값을 반환하기 때문에 단일 게시글에 접근을 할 때는 CommunityService 에서 listOne 에 해당하는 메서드를 호출 해야함
-    public Page<BoardResponse> myPost(String authorizationHeader, int page, int size, String sortBy, String order) {
-        String token = authorizationHeader.replace("Bearer ", "");
+    public Page<BoardResponse> myPost(int page, int size, String sortBy, String order) {
+        Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+        User user = userRepository.findById(userKey)
+                .orElseThrow(() -> new ForbiddenException("해당 유저를 찾을 수 없습니다."));
+
         // 정렬시 기본값 설정, 페이지에 처음 접근할때
         if (sortBy == null || sortBy.isEmpty()) {
             sortBy = "createdAt";  // 기본적으로 최신순
@@ -94,17 +99,22 @@ public class MyPageService {
         if (order == null || order.isEmpty()) {
             order = "DESC";  // 기본적으로 내림차순
         }
-        // 토큰에서 인증 정보 확인
-        jwtUtil.getAuthentication(token);
-        // Access 토큰에서 id 추출
-        Long userId = jwtUtil.extractUserId(token);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
 
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
         Pageable pageable = PageRequest.of(page - 1, size, sort);
         Page<Board> boards = boardRepository.findByUserKey(user.getUserKey(), pageable);
-        return boards.map(BoardResponse::ofMyPost);
+
+        // 게시글 목록을 BoardResponse로 변환하여 반환
+        return boards.map(board -> {
+
+            // 각 게시글에 대한 댓글, 좋아요, 싫어요 수 가져오기
+            int commentCnt = commentRepository.countCommentsByBoardId(board.getId()); // 수정
+            int likeCnt = boardReactionRepository.countLikesByBoardId(board.getId()); // 수정
+            int dislikeCnt = boardReactionRepository.countDislikesByBoardId(board.getId()); // 수정
+
+            // BoardResponse로 변환하여 반환
+            return BoardResponse.ofPost(board, commentCnt, likeCnt, dislikeCnt);
+        });
     }
 
     public Page<ReportResponse> myReportList(String authorizationHeader, int page, int size, String sortBy, String order) {

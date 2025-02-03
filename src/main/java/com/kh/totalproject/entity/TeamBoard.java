@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
@@ -21,8 +22,6 @@ import java.util.List;
 @NoArgsConstructor
 public class TeamBoard extends Board {
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
 
     @Type(JsonType.class)
     @Column(columnDefinition = "json")
@@ -30,9 +29,6 @@ public class TeamBoard extends Board {
 
     @PrePersist
     private void defaultValues() {
-        if (status == null) {
-            this.status = Status.ACTIVE;
-        }
         if (team == null) {
             this.team = new ArrayList<>();
         }
@@ -42,7 +38,7 @@ public class TeamBoard extends Board {
     public TeamBoard(User user, Long boardId, String title, String content, String imgUrl, LocalDateTime createdAt,
               LocalDateTime updatedAt, Status status, List<String> team) {
         super(boardId, title, content, imgUrl, createdAt, updatedAt);
-        this.status = status;
+        this.setStatus(status);
         this.team = team;
         this.setUser(user);
         this.setBoardType(BoardType.TEAM);
