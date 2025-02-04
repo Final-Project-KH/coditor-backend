@@ -15,12 +15,14 @@ public class CommentResponse {
     private Long boardId;
     private Long commentId;
     private String content;
+    private String profileUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static CommentResponse ofAllComment(Comment comment) {
         return CommentResponse.builder()
                 .name(comment.getUser().getNickname())
+                .profileUrl(comment.getUser().getProfileUrl())
                 .boardId(comment.getBoard().getId())
                 .commentId(comment.getId())
                 .content(comment.getContent())
