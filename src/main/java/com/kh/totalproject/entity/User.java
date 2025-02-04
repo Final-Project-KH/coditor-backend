@@ -35,7 +35,7 @@ public class User {
     private String userId;
 
     @Column(nullable = false, unique = true, length = 30)
-    @Size(min = 4, max = 50, message = "닉네임은 1자 이상, 16자 이하(한글 기준)")
+    @Size(min = 3, max = 50, message = "닉네임은 1자 이상, 16자 이하(한글 기준)")
     private String nickname;
 
     @Column(nullable = false, length = 50)

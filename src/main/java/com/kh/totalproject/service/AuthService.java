@@ -11,11 +11,13 @@ import com.kh.totalproject.entity.OtpVerificationForJoin;
 import com.kh.totalproject.entity.Token;
 import com.kh.totalproject.entity.User;
 import com.kh.totalproject.exception.HiJackingException;
+import com.kh.totalproject.exception.NotFoundException;
 import com.kh.totalproject.repository.EmailValidationForJoinRepository;
 import com.kh.totalproject.repository.EmailValidationRepository;
 import com.kh.totalproject.repository.TokenRepository;
 import com.kh.totalproject.repository.UserRepository;
 import com.kh.totalproject.util.JwtUtil;
+import com.kh.totalproject.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +53,7 @@ public class AuthService {
     // Login 시 토큰 반환
     public TokenResponse logIn(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByUserId(loginRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException("존재하는 계정이 아닙니다."));
+                .orElseThrow(() -> new NotFoundException("해당 계정의 ID를 찾을 수 없습니다."));
         // 만약 기존에 토큰이 있을시에 DB 에서 Refresh 토큰 삭제
         tokenRepository.deleteByUserKey(user.getUserKey());
         // 토큰을 제작, 발급을 해주는 로직
@@ -67,15 +70,16 @@ public class AuthService {
             tokenRepository.save(token);
             return TokenResponse.ofAccessToken(tokenResponse, user);
         }
-        else log.warn("비밀번호가 일치하지 않습니다.");
-        throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
+        else System.err.println("비밀번호를 찾을 수 없음");
+        throw new AuthenticationException("비밀번호가 일치하지 않습니다.") {
+        };
     }
 
-    public Boolean autoLogIn (String accessToken) {
-        String token = accessToken.replace("Bearer ", "");
-        Long userKey = jwtUtil.extractUserId(token);
-
-        return userRepository.findByUserKey(userKey).isPresent();
+    public Boolean autoLogIn () {
+        Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+        User user = userRepository.findById(userKey)
+                .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
+        return userRepository.findByUserKey(user.getUserKey()).isPresent();
     }
     // Access Token 만료시 토큰 재발행
     public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
@@ -106,25 +110,26 @@ public class AuthService {
 
     // 회원 가입 서비스 계층 비즈니스 로직
     public Boolean signUp(UserRequest userRequest) {
-        Integer otp = userRequest.getOtp();
-        if (!validateOtpForJoin(otp, userRequest.getEmail())) {
-            throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
-        }
+
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new RuntimeException("이미 가입되어 있는 유저입니다");
         }
         User user = userRequest.toEntity(passwordEncoder);
         userRepository.save(user);
 
-        // 회원가입 성공 시 OTP 삭제
-        deleteOtpForJoin(userRequest.getEmail());
-
-        String htmlContent = "<h1 style=\"color: #4CAF50; text-align: center;\">회원가입을 환영합니다!</h1>"
-                + "<p style=\"font-size: 16px; line-height: 1.6; text-align: center;\">안녕하세요, " + userRequest.getNickname() + "님!</p>"
-                + "<p style=\"font-size: 16px; line-height: 1.6; text-align: center;\">저희 서비스를 가입해주셔서 감사합니다. 이제 다양한 기능을 자유롭게 이용하실 수 있습니다!</p>"
+        String htmlContent = "<div style=\"max-width: 600px; margin: auto; padding: 20px; font-family: Arial, sans-serif; border: 1px solid #ddd; border-radius: 10px;\">"
+                + "<h1 style=\"color: #4CAF50; text-align: center;\">회원가입을 환영합니다!</h1>"
+                + "<p style=\"font-size: 16px; line-height: 1.6; text-align: center;\">안녕하세요, <strong>" + userRequest.getNickname() + "</strong>님!</p>"
+                + "<p style=\"font-size: 16px; line-height: 1.6; text-align: center;\">저희 Coditor 서비스를 가입해주셔서 감사합니다. 이제 다양한 기능을 자유롭게 이용하실 수 있습니다!</p>"
                 + "<p style=\"font-size: 16px; line-height: 1.6; text-align: center;\">어떤 질문이나 문제가 있으면 언제든지 저희 고객 지원팀에 문의해 주세요.</p>"
-                + "<h3 style=\"color: #2196F3; text-align: center;\">우리 서비스와 함께 행복한 시간을 보내세요!</h3>"
-                + "<p style=\"font-size: 14px; color: #999; text-align: center;\">본 이메일은 자동으로 생성된 이메일입니다. 만약 이 이메일을 받지 않으셨다면, 스팸 폴더를 확인해 주세요.</p>";
+                + "<h3 style=\"color: #2196F3; text-align: center;\">Coditor와 함께 행복한 시간을 보내세요!</h3>"
+                + "<p style=\"font-size: 14px; color: #999; text-align: center;\">본 이메일은 자동으로 생성된 이메일입니다. 만약 이 이메일을 받지 않으셨다면, 스팸 폴더를 확인해 주세요.</p>"
+                + "<div style=\"text-align: center; margin-top: 20px;\">"
+                + "    <div style=\"display: inline-block; background-color: #000; padding: 10px 20px; border-radius: 5px;\">"
+                + "        <span style=\"color: #fff; font-size: 18px; font-weight: bold;\">Cdt.</span>"
+                + "    </div>"
+                + "</div>"
+                + "</div>";
 
         MailBody mailBody = MailBody.builder()
                 .to(userRequest.getEmail())
@@ -147,19 +152,20 @@ public class AuthService {
         };
     }
 
-    private void deleteOtpForJoin(String email) {
-        emailValidationForJoinRepository.deleteByEmail(email);
-    }
-
     // 회원 가입중 기입한 이메일로 OTP 전달
     public Boolean sendOtpForJoin(String email) {
         // 재전송을 대비해, 해당 호출이 들어올때마다 기존의 OTP 를 삭제
         emailValidationForJoinRepository.deleteByEmail(email);
 //        emailValidationForJoinRepository.deleteExpiredOtp(new Date()); 기존 만료시간 네이밍 쿼리는 위에와 중복되므로 삭제
         int otp = otpGenerator();
-        String htmlContent = "<h1>이메일 인증 OTP</h1>"
-                + "<p>이메일 인증시 필요한 OTP 입니다 : </p>"
-                + "<h2>" + otp + "</h2>";
+        String htmlContent = "<div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f9f9f9;'>"
+                + "<h1 style='color: #2d89ef;'>Coditor 이메일 인증 OTP</h1>"
+                + "<p style='font-size: 16px; color: #333;'>이메일 인증을 위해 아래의 OTP를 입력하세요.</p>"
+                + "<div style='display: inline-block; padding: 15px 30px; font-size: 24px; font-weight: bold; color: #ffffff; "
+                + "background-color: #2d89ef; border-radius: 8px; margin-top: 10px;'>"
+                + otp + "</div>"
+                + "<p style='margin-top: 20px; font-size: 14px; color: #666;'>본 이메일은 Coditor에서 발송되었습니다.</p>"
+                + "</div>";
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .html(htmlContent)
@@ -208,9 +214,14 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("등록된 이메일이 존재하지 않습니다."));
         emailValidationRepository.deleteByUserKey(user.getUserKey());
         int otp = otpGenerator();
-        String htmlContent = "<h1>비밀번호 찾기 OTP</h1>"
-                + "<p>비밀번호 찾기 시 필요한 OTP 입니다 : </p>"
-                + "<h2>" + otp + "</h2>";
+        String htmlContent = "<div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f9f9f9;'>"
+                + "<h1 style='color: #2d89ef;'>Coditor 비밀번호 찾기 OTP</h1>"
+                + "<p style='font-size: 16px; color: #333;'>비밀번호 찾기를 위해 아래의 OTP를 입력하세요.</p>"
+                + "<div style='display: inline-block; padding: 15px 30px; font-size: 24px; font-weight: bold; color: #ffffff; "
+                + "background-color: #2d89ef; border-radius: 8px; margin-top: 10px;'>"
+                + otp + "</div>"
+                + "<p style='margin-top: 20px; font-size: 14px; color: #666;'>본 이메일은 Coditor에서 발송되었습니다.</p>"
+                + "</div>";
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .html(htmlContent)

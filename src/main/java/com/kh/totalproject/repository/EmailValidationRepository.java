@@ -7,11 +7,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Optional;
 
 @Repository
+@Transactional
 public interface EmailValidationRepository extends JpaRepository<OtpVerification, Long> {
     @Query("select ov from OtpVerification ov where ov.otp = ?1 and ov.user = ?2")
     Optional<OtpVerification> findByOtpAndUser(Integer otp, User user);

@@ -35,8 +35,8 @@ public class AuthController {
     }
 
     @PostMapping("/autologin")
-    public ResponseEntity<Boolean> autoLogIn(@RequestHeader("Authorization") String accessToken){
-        return ResponseEntity.ok(authService.autoLogIn(accessToken));
+    public ResponseEntity<Boolean> autoLogIn(){
+        return ResponseEntity.ok(authService.autoLogIn());
     }
 
     // 엑세스 토큰 만료시 요청, 응답

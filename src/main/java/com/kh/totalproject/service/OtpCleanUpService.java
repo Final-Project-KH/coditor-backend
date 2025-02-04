@@ -17,7 +17,6 @@ public class OtpCleanUpService {
 
 
     // 만료된 OTP 에 한정하여 자동으로 삭제
-    @Transactional
     @Scheduled(fixedRate = 300000)  // 5분마다 삭제
     public void deleteExpiredOtp() {
         emailValidationRepository.deleteExpiredOtp(new Date());
