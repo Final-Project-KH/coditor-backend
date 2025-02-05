@@ -10,7 +10,9 @@ import com.kh.totalproject.entity.OtpVerification;
 import com.kh.totalproject.entity.OtpVerificationForJoin;
 import com.kh.totalproject.entity.Token;
 import com.kh.totalproject.entity.User;
+import com.kh.totalproject.exception.DuplicateResourceException;
 import com.kh.totalproject.exception.HiJackingException;
+import com.kh.totalproject.exception.InvalidValueException;
 import com.kh.totalproject.exception.NotFoundException;
 import com.kh.totalproject.repository.EmailValidationForJoinRepository;
 import com.kh.totalproject.repository.EmailValidationRepository;
@@ -85,7 +87,7 @@ public class AuthService {
     public TokenResponse reissueToken(String refreshToken, HttpServletResponse response) {
         // 매개변수로 들어온 Refresh Token 을 DB 에서의 존재 유무 확인
         Token token = tokenRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new BadCredentialsException("유효한 Refresh 토큰이 아닙니다."));
+                .orElseThrow(() -> new NotFoundException("해당 토큰은 존재하지 않거나 유효하지 않습니다."));
 
         User user = token.getUser();
         // 사용자가 매개변수로 들어온 Refresh Token 을 가지고 있는지 유무 체크 / 없으면 기존 Refresh Token 을 DB 에서 삭제
@@ -112,7 +114,7 @@ public class AuthService {
     public Boolean signUp(UserRequest userRequest) {
 
         if (userRepository.existsByEmail(userRequest.getEmail())) {
-            throw new RuntimeException("이미 가입되어 있는 유저입니다");
+            throw new DuplicateResourceException("이미 가입되어 있는 유저입니다");
         }
         User user = userRequest.toEntity(passwordEncoder);
         userRepository.save(user);
@@ -203,7 +205,7 @@ public class AuthService {
     // 이메일을 통한 ID 찾기
     public UserResponse getIdByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 이메일 입니다."));
         return UserResponse.ofUserId(user);
     }
 
@@ -211,7 +213,7 @@ public class AuthService {
     public Boolean sendOtpForPasswordReset(String email) {
         // 새 OTP 생성시 기존의 OTP 삭제
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("등록된 이메일이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("등록된 이메일이 존재하지 않습니다."));
         emailValidationRepository.deleteByUserKey(user.getUserKey());
         int otp = otpGenerator();
         String htmlContent = "<div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f9f9f9;'>"
@@ -240,9 +242,9 @@ public class AuthService {
     // 비밀번호 찾기시 발급받은 OTP 가 맞는지 확인
     public Boolean validateOtpForPw(Integer otp, String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 이메일 입니다."));
         OtpVerification otpVerification = emailValidationRepository.findByOtpAndUser(otp, user)
-                .orElseThrow(() -> new RuntimeException("해당하는 이메일에 적합한 OTP 가 아닙니다."));
+                .orElseThrow(() -> new InvalidValueException("해당하는 이메일에 적합한 OTP 가 아닙니다."));
         if (otpVerification.getExpirationDate().before(Date.from(Instant.now()))) {
             emailValidationRepository.deleteById(otpVerification.getId());
             return false;
@@ -253,14 +255,14 @@ public class AuthService {
 
     public Boolean availableNewPassword(String email, String newPw) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 이메일 입니다."));
         return !passwordEncoder.matches(newPw, user.getPassword());
     }
 
     // 비밀번호 찾기 OTP 인증후에 비밀번호 변경
     public Boolean resetPassword(String email, String newPw) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 이메일 입니다."));
         String newHashedPw = passwordEncoder.encode(newPw);
         user.setPassword(newHashedPw);
         userRepository.save(user);

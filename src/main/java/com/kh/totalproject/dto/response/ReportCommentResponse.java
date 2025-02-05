@@ -19,14 +19,13 @@ public class ReportCommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static ReportCommentResponse ofAllComment(ReportComment reportComment) {
+    public static ReportCommentResponse ofAdminReply(ReportComment reportComment) {
         return ReportCommentResponse.builder()
                 .name(reportComment.getUser().getNickname())
                 .reportId(reportComment.getReportBoard().getId())
                 .commentId(reportComment.getId())
                 .content(reportComment.getContent())
                 .createdAt(reportComment.getCreatedAt())
-                .updatedAt(reportComment.getUpdatedAt())
                 .build();
     }
 }

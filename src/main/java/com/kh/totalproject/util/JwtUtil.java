@@ -196,11 +196,11 @@ public class JwtUtil {
 //        return authorities;
 //    }
 
-    // Access 토큰으로 role 을 추출
-    public String extractUserRole(String token) {
-        Claims claims = parseToken(token);
-        return claims.get("authorities").toString();
-    }
+//    // Access 토큰으로 role 을 추출
+//    public String extractUserRole(String token) {
+//        Claims claims = parseToken(token);
+//        return claims.get("authorities").toString();
+//    }
 
     // access 토큰 재발급
     public String generateAccessToken(Authentication authentication, HttpServletResponse response) {
