@@ -50,7 +50,7 @@ public class User {
     private String introduction;
     
     // 암호화 하기 때문에 max 값 255로 설정
-    @Column
+    @Column()
     @Size(min = 8, max = 255, message = "비밀번호는 8자 이상, 50자 이하")
     private String password;
 

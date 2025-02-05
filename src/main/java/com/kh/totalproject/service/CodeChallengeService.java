@@ -1,6 +1,5 @@
 package com.kh.totalproject.service;
 
-import com.google.api.Http;
 import com.kh.totalproject.constant.ChallengeDifficulty;
 import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.flask.callback.TestcaseResult;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -214,12 +212,10 @@ public class CodeChallengeService {
         } catch (IOException e) {
             // 클라이언트와의 SSE 연결이 모종의 이유(이탈, 네트워크 장애)로 끊어져
             // 메시지를 send 할 수 없는 경우 처리
-            log.info("Disconnected from client: {}", e.getMessage());
-            removeSubscriptionAndSetEmitterComplete(jobId);
             return SendTestcaseResultStatus.GONE;
         } catch (Exception e) {
             // 기타 예외 처리
-            log.error("Unexpected error occurred while sending event for jobId: {}", jobId, e);
+            log.warn("Unexpected error occurred while sending event for jobId: {}", jobId, e);
             removeSubscriptionAndSetEmitterComplete(jobId);
             return SendTestcaseResultStatus.ERROR;
         }
@@ -228,7 +224,7 @@ public class CodeChallengeService {
     public CodeChallengeInfo getChallengeInfo(Long questionId) {
         return codeChallengeInfoRepository.findById(questionId).orElse(null);
     }
-    
+
     public CodeChallengeSubmission getSubmissionHistory(Long userId, CodeChallengeInfo challengeInfo) {
         User user = userRepository.findById(userId).orElse(null); // userId에 대한 유효성 검증이 끝났으므로 사실상 항상 조회 성공
         if (user == null) { log.warn("존재하지 않는 회원이지만, 토큰에서 회원 번호 검증에는 통과하였음, userId={}", userId); return null; }

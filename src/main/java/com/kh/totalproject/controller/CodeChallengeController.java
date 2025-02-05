@@ -1,6 +1,7 @@
 package com.kh.totalproject.controller;
 
 import com.kh.totalproject.constant.ChallengeDifficulty;
+import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
 import com.kh.totalproject.dto.response.CancelJobResponse;
 import com.kh.totalproject.dto.response.ChallengeMetaResponse;
@@ -9,6 +10,7 @@ import com.kh.totalproject.dto.response.SubmitCodeResponse;
 import com.kh.totalproject.entity.CodeChallengeInfo;
 import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.service.CodeChallengeService;
+import com.kh.totalproject.util.Base64Util;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -32,10 +35,17 @@ public class CodeChallengeController {
     private final CodeChallengeService codeChallengeService;
 
     @PostMapping("/submit")
-    public ResponseEntity<SubmitCodeResponse> submit(
+    public ResponseEntity<Object> submit(
             @RequestBody SubmitCodeRequest dto
     ) {
         dto.setUserId(getCurrentUserIdOrThrow());
+
+        if (!Base64Util.isBase64Encoded(dto.getCode())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                Map.of("error", "제출된 코드는 조작되었거나 유효하지 않습니다.")
+            );
+        }
+
         String jobId = codeChallengeService.createJob(dto);
 
         // 2분 30초 수명 설정
@@ -86,7 +96,12 @@ public class CodeChallengeController {
         });
 
         emitter.onError(e -> {
-            log.warn("SSE error for job id: {}, error message: {}", jobId, e.getMessage());
+            if (e instanceof IOException) {
+                log.info("Disconnected from client!");
+            } else {
+                log.warn("SSE error for job id: {}, error message: {}", jobId, e.getMessage());
+            }
+
             codeChallengeService.removeSubscriptionAndSetEmitterComplete(jobId);
         });
 
