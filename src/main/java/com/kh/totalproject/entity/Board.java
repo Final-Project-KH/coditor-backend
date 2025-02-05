@@ -27,8 +27,9 @@ public class Board {
 
     private int viewCnt = 0;
     private int commentCnt = 0;
-    private int likeCnt = 0;
-    private int dislikeCnt = 0;
+    private Integer likeCnt = 0;
+    private Integer dislikeCnt = 0;
+
 
     private String imgUrl;
     private LocalDateTime createdAt;
@@ -92,19 +93,30 @@ public class Board {
         comment.setBoard(null);
     }
 
-    // 좋아요 수를 동적으로 계산하고 likeCnt 필드를 업데이트
     public int getLikeCnt() {
-        return (int) boardReactions.stream()
+        int calculatedLikeCnt = (int) boardReactions.stream()
                 .filter(reaction -> reaction.getReaction().equals(Reaction.LIKE))
                 .count();
+        return (likeCnt != null ? likeCnt : 0) + calculatedLikeCnt;
     }
 
-    // 싫어요 수를 동적으로 계산
     public int getDislikeCnt() {
-        return (int) boardReactions.stream()
+        int calculatedDislikeCnt = (int) boardReactions.stream()
                 .filter(reaction -> reaction.getReaction().equals(Reaction.DISLIKE))
                 .count();
+        return (dislikeCnt != null ? dislikeCnt : 0) + calculatedDislikeCnt;
     }
+
+//    // 게시글의 좋아요, 싫어요 카운트를 업데이트하는 메서드
+//    public void updateLikeDislikeCounts() {
+//        int likeCount = (int) boardReactions.stream().filter(reaction -> reaction.getReaction() == Reaction.LIKE).count();
+//        int dislikeCount = (int) boardReactions.stream().filter(reaction -> reaction.getReaction() == Reaction.DISLIKE).count();
+//
+//        this.likeCnt = likeCount;
+//        this.dislikeCnt = dislikeCount;
+//    }
+
+
 
     // 사용자의 반응을 처리 (사용자가 좋아요, 싫어요를 했는지 확인)
     public Reaction getUserReaction(User user) {

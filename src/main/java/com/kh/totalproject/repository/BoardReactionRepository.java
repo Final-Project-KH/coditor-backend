@@ -1,5 +1,6 @@
 package com.kh.totalproject.repository;
 
+import com.kh.totalproject.constant.Reaction;
 import com.kh.totalproject.entity.Board;
 import com.kh.totalproject.entity.BoardReaction;
 import com.kh.totalproject.entity.User;
@@ -19,4 +20,5 @@ public interface BoardReactionRepository extends JpaRepository<BoardReaction, Lo
 
     @Query("SELECT COUNT(br) FROM BoardReaction br WHERE br.board.id = :boardId AND br.reaction = 'DISLIKE'")
     int countDislikesByBoardId(@Param("boardId") Long boardId);
+
 }

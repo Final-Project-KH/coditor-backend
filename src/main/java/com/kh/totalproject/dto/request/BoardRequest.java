@@ -20,6 +20,9 @@ public class BoardRequest {
     private String content;
     private String imgUrl;
     private Status status;
+    private Integer likeCnt;
+    private Integer dislikeCnt;
+    private Integer viewCnt;
     private List<String> language;
     private List<String> course;
     private List<String> study;
