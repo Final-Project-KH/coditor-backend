@@ -98,6 +98,7 @@ public class BoardRequest {
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .study(study != null ? study : existingData.getStudy())
+                .status(status != null ? status : existingData.getStatus())
                 .createdAt(existingData.getCreatedAt())
                 .build();
     }
@@ -110,6 +111,7 @@ public class BoardRequest {
                 .content(content != null ? content : existingData.getContent())
                 .imgUrl(imgUrl != null ? imgUrl : existingData.getImgUrl())
                 .team(team != null ? team : existingData.getTeam())
+                .status(status != null ? status : existingData.getStatus())
                 .createdAt(existingData.getCreatedAt())
                 .build();
     }

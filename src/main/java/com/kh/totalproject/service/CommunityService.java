@@ -17,24 +17,19 @@ import com.kh.totalproject.dto.response.UserResponse;
 import com.kh.totalproject.entity.*;
 import com.kh.totalproject.exception.BadRequestException;
 import com.kh.totalproject.exception.ForbiddenException;
+import com.kh.totalproject.exception.NotFoundException;
 import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
 import com.kh.totalproject.util.SecurityUtil;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,12 +50,12 @@ public class CommunityService {
     private final JwtUtil jwtUtil;
     private final CustomBoardRepository customBoardRepository;
 
-    // 게시글 생성 서비스   // getCurrentUserIdOrThrow 를 통해서 Context 헤더로 들어온 Access 토큰을 처리
+    // 게시글 생성 서비스 getCurrentUserIdOrThrow 를 통해서 Context 헤더로 들어온 Access 토큰을 처리
     public Boolean createPost(BoardRequest boardRequest, String boardType) {
         try {
             Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
             User user = userRepository.findById(userKey)
-                    .orElseThrow(() -> new ForbiddenException("해당 유저를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             // setName 으로 닉네임을 변수값으로 지정
             boardRequest.setName(user.getNickname());
@@ -71,6 +66,7 @@ public class CommunityService {
             // 생성된 게시글 저장 return true
             return saveBoardEntity(boardEntity);
         } catch (BadRequestException e) {
+            System.err.println("게시글 생성 실패: " + e.getMessage());
             return false;
         }
     }
@@ -90,7 +86,7 @@ public class CommunityService {
         try {
             Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
             User user = userRepository.findById(userKey)
-                    .orElseThrow(() -> new ForbiddenException("해당 유저를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             // Enum -> String 형변환 메서드 호출
             BoardType type = BoardType.fromString(boardType);
@@ -98,46 +94,37 @@ public class CommunityService {
 
             // 게시글 작성자가 맞는지 확인
             if (!existingBoard.getUser().getUserKey().equals(user.getUserKey())) {
-                throw new IllegalArgumentException("작성자가 아닙니다.");
+                throw new ForbiddenException("이 글을 삭제 할 권한이 없습니다.");
             }
-
             Board updatedBoard = updateBoard(boardRequest, existingBoard, user, type);
-
             // 수정된 게시글 저장 return true
             return saveBoardEntity(updatedBoard);
-
-        } catch (BadCredentialsException e) {
+        } catch (BadRequestException e) {
+            System.err.println("게시글 수정 실패: " + e.getMessage());
             return false;
         }
     }
 
     // 게시글 삭제 서비스 로직
-    public Boolean deletePost(String authorizationHeader, Long id) {
+    public Boolean deletePost(Long id) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            jwtUtil.getAuthentication(token);
-            Long userId = jwtUtil.extractUserId(token);
-
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
             // 유저 검증
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: " + userId));
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             // 게시글 검증
             Board board = boardRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("삭제할 게시글이 존재하지 않습니다."));
+                    .orElseThrow(() -> new NotFoundException("삭제할 게시글이 존재하지 않습니다."));
 
-            // 권한 검증
+            // 삭제 권한 검증
             if (!board.getUser().getUserId().equals(user.getUserId())) {
                 throw new SecurityException("삭제할 권한이 없습니다.");
             }
-
             boardRepository.deleteById(id);
             return true;
-        } catch (EntityNotFoundException | SecurityException e) {
-            System.err.println("삭제중 에러 발생 : " + e.getMessage());
-            return false;
-        } catch (IllegalArgumentException e) {
-            System.err.println("잘못된 요청 : " + e.getMessage());
+        } catch (BadRequestException e) {
+            System.err.println("게시글 삭제 실패: " + e.getMessage());
             return false;
         }
     }
@@ -146,13 +133,13 @@ public class CommunityService {
     private Board findByBoardId(BoardRequest boardRequest, BoardType type) {
         return switch (type) {
             case CODING -> codingBoardRepository.findById(boardRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당하는 게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당하는 게시글을 찾을 수 없습니다."));
             case COURSE -> courseBoardRepository.findById(boardRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당하는 게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당하는 게시글을 찾을 수 없습니다."));
             case STUDY -> studyBoardRepository.findById(boardRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당하는 게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당하는 게시글을 찾을 수 없습니다."));
             case TEAM -> teamBoardRepository.findById(boardRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당하는 게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당하는 게시글을 찾을 수 없습니다."));
         };
     }
 
@@ -307,55 +294,57 @@ public class CommunityService {
 //            }
 //        };
 //    }
-public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType,
-                                                      String sortBy, String order,
-                                                      String status, String enumFilter, String search) {
-    if (sortBy == null || sortBy.isEmpty()) {
-        sortBy = "createdAt";
+
+    // 각 게시판에서 필터, 정렬, 검색 등등을 하나로 묶어 통합적인 로직, Criteria 동적쿼리 API 를 사용
+    public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String boardType,
+                                                          String sortBy, String order,
+                                                          String status, String enumFilter, String search) {
+        try {
+            if (sortBy == null || sortBy.isEmpty()) {
+                sortBy = "createdAt";
+            }
+            if (order == null || order.isEmpty()) {
+                order = "DESC";
+            }
+            BoardType type = BoardType.fromString(boardType);
+
+            Pageable pageable = PageRequest.of(page - 1, size);
+            Status statusEnum = (status != null && !status.isEmpty()) ? Status.valueOf(status.toUpperCase()) : null;
+
+            Page<Object[]> resultPage = customBoardRepository.findAllWithDynamicFilters(type, statusEnum, sortBy, order, enumFilter, search, pageable);
+
+            // Object[]를 BoardResponse 로 변환
+            List<BoardResponse> boardResponses = resultPage.getContent().stream()
+                    .map(objects -> {
+                        Board board = (Board) objects[0];  // Board 엔티티
+                        int commentCnt = ((Long) objects[1]).intValue();  // 댓글 개수
+                        int likeCnt = ((Long) objects[2]).intValue();  // 좋아요 개수
+                        int dislikeCnt = ((Integer) objects[3]).intValue();  // 조회수 개수
+
+                        return BoardResponse.of(board, commentCnt, likeCnt, dislikeCnt);  // BoardResponse 반환
+                    })
+                    .collect(Collectors.toList());
+            return new PageImpl<>(boardResponses, pageable, resultPage.getTotalElements());
+        } catch (BadRequestException e) {
+            System.err.println("게시글 조회 실패: " + e.getMessage());
+            return Page.empty();
+        }
     }
-    if (order == null || order.isEmpty()) {
-        order = "DESC";
-    }
-
-    log.info("Received boardType: " + boardType); // boardType 값 출력
-    BoardType type = BoardType.fromString(boardType);
-    log.info("Converted BoardType: " + type); // 변환된 BoardType 출력
-
-    Pageable pageable = PageRequest.of(page - 1, size);
-    Status statusEnum = (status != null && !status.isEmpty()) ? Status.valueOf(status.toUpperCase()) : null;
-
-    Page<Object[]> resultPage = customBoardRepository.findAllWithDynamicFilters(type, statusEnum, sortBy, order, enumFilter, search, pageable);
-
-    // Object[]를 BoardResponse로 변환
-    List<BoardResponse> boardResponses = resultPage.getContent().stream()
-            .map(objects -> {
-                Board board = (Board) objects[0];  // Board 엔티티
-                int commentCnt = ((Long) objects[1]).intValue();  // 댓글 개수
-                int likeCnt = ((Long) objects[2]).intValue();  // 좋아요 개수
-                int dislikeCnt = ((Integer) objects[3]).intValue();  // 조회수 개수
-
-                return BoardResponse.of(board, commentCnt, likeCnt, dislikeCnt);  // BoardResponse 반환
-            })
-            .collect(Collectors.toList());
-
-    return new PageImpl<>(boardResponses, pageable, resultPage.getTotalElements());
-}
 
 
     // 단순 조회수 올리기 서비스
     public Boolean listOneByIdCheck(long id) {
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다."));
 
         increaseViewCnt(board); // 조회수 증가
-
         return true;
     }
 
     // 각 게시판 별 단일 글을 불러오는 서비스
     public BoardResponse listOneById(long id) {
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 글이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다."));
 
         // 댓글 수 및 작성자 글 수 가져오기
         int commentCnt = commentRepository.countByBoardId(id);
@@ -398,86 +387,85 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
 
     // 게시글 접근시 게시글내 해당하는 댓글도 같이 통신
     public Page<CommentResponse> listComment(Long boardId, int page, int size, String sortBy, String order) {
-        // 정렬시 기본값 설정, 페이지에 처음 접근할때
-        if (sortBy == null || sortBy.isEmpty()) {
-            sortBy = "createdAt";  // 기본적으로 최신순
+        try {
+            // 정렬시 기본값 설정, 페이지에 처음 접근할때
+            if (sortBy == null || sortBy.isEmpty()) {
+                sortBy = "createdAt";  // 기본적으로 최신순
+            }
+            if (order == null || order.isEmpty()) {
+                order = "DESC";  // 기본적으로 내림차순
+            }
+            Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+            Pageable pageable = PageRequest.of(page - 1, size, sort);
+            Page<Comment> comments = commentRepository.findByBoardId(boardId, pageable);
+            return comments.map(CommentResponse::ofAllComment);
+        } catch (BadRequestException e) {
+            System.err.println("게시글내 댓글 조회 실패: " + e.getMessage());
+            return Page.empty();
         }
-        if (order == null || order.isEmpty()) {
-            order = "DESC";  // 기본적으로 내림차순
-        }
-        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
-        Page<Comment> comments = commentRepository.findByBoardId(boardId, pageable);
-        return comments.map(CommentResponse::ofAllComment);
     }
 
     // 게시글 내 댓글 생성
-    public Boolean addComment(String authorizationHeader, CommentRequest commentRequest) {
+    public Boolean addComment(CommentRequest commentRequest) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            jwtUtil.getAuthentication(token);
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
             Board board = boardRepository.findById(commentRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다 "));
+                    .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다 "));
             Comment comment = commentRequest.toAddComment(user, board);
             commentRepository.save(comment);
             return true;
-        } catch (IllegalArgumentException e) {
-            System.err.println("잘못된 요청 : " + e.getMessage());
+        } catch (BadRequestException e) {
+            System.err.println("댓글 생성 실패: " + e.getMessage());
             return false;
         }
     }
 
     // 게시글 내 댓글 수정
-    public Boolean modifyComment(String authorizationHeader, CommentRequest commentRequest) {
+    public Boolean modifyComment(CommentRequest commentRequest) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            jwtUtil.getAuthentication(token);
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
             Board board = boardRepository.findById(commentRequest.getBoardId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다 "));
+                    .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다 "));
             Comment existingComment = commentRepository.findById(commentRequest.getCommentId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당 댓글을 찾을 수 없습니다."));
 
-            // 기존에 존재하는 데이터를 넣어서 수정된게 없으면 그대로 default 값 사용
+            if (!user.getUserKey().equals(existingComment.getUser().getUserKey())) {
+                throw new ForbiddenException("해당 유저는 댓글을 수정 할 권한이 없습니다.");
+            }
+            // 기존에 존재하는 데이터와 비교해, 바뀐 값이면 수정, 아니면 기존의 데이터 사용
             Comment comment = commentRequest.toUpdateComment(user, board, existingComment);
-
             commentRepository.save(comment);
             return true;
-        } catch (Exception e) {
+        } catch (BadRequestException e) {
+            System.err.println("댓글 수정 실패: " + e.getMessage());
             return false;
         }
     }
 
-    // 댓글 삭제 구현
-    public Boolean deleteComment(String authorizationHeader, Long id) {
+    // 게시글 내 댓글 삭제 구현
+    public Boolean deleteComment(Long id) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            jwtUtil.getAuthentication(token);
-            Long userId = jwtUtil.extractUserId(token);
-
-            // 유저 검증
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             // 댓글 검증
             Comment comment = commentRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("삭제 할 댓글이 없습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
             // 권한 검증
             if (!comment.getUser().getUserId().equals(user.getUserId())) {
-                throw new SecurityException("삭제할 권한이 없습니다.");
+                throw new ForbiddenException("해당 댓글을 삭제할 권한이 없습니다.");
             }
 
             commentRepository.deleteById(id);
             return true;
-        } catch (Exception e) {
+        } catch (BadRequestException e) {
+            System.err.println("댓글 삭제 실패: " + e.getMessage());
             return false;
         }
     }
@@ -485,9 +473,9 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
     // 토글방법 좋아요 싫어요 클릭
     public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("유저가 존재 하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
         Optional<BoardReaction> existingReaction = boardReactionRepository.findByBoardAndUser(board, user);
 
@@ -521,9 +509,9 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
     // 사용자 좋아요 싫어요 클릭시 확인 Status 구현
     public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재 하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("유저가 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
         Reaction userReaction = board.getUserReaction(user);
         int likeCnt = board.getLikeCnt();
@@ -548,6 +536,7 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
                 .collect(Collectors.toList());
     }
 
+    // 주간 인기글 로직 JPQL 사용해 복합쿼리 생성 List 0 번에 게시글, 1번에 프로필사진, 2번에 유저 닉네임
     public List<BoardResponse> getWeeklyPopularPost() {
         Pageable topFive = PageRequest.of(0, 5);
 
@@ -570,9 +559,9 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
     public Page<BoardResponse> listOthersPost(Long userId, int page, int size, String sortBy, String order) {
         try {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
-            // 정렬 기준이 null이거나 비어있으면 기본값 설정
+            // 정렬 기준이 null 이거나 비어있으면 기본값 설정
             if (sortBy == null || sortBy.isEmpty()) {
                 sortBy = "createdAt";  // 기본적으로 최신순
             }
@@ -589,13 +578,13 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
 
             // 게시글 목록과 관련된 정보(commentCnt, likeCnt, dislikeCnt)를 가져와서 변환
             return boards.map(board -> {
-                int commentCnt = commentRepository.countCommentsByBoardId(board.getId()); // 수정
-                int likeCnt = boardReactionRepository.countLikesByBoardId(board.getId()); // 수정
-                int dislikeCnt = boardReactionRepository.countDislikesByBoardId(board.getId()); // 수정
+                int commentCnt = commentRepository.countCommentsByBoardId(board.getId());
+                int likeCnt = boardReactionRepository.countLikesByBoardId(board.getId());
+                int dislikeCnt = boardReactionRepository.countDislikesByBoardId(board.getId());
                 return BoardResponse.ofPost(board, commentCnt, likeCnt, dislikeCnt);
             });
-        } catch (BadCredentialsException e) {
-            log.info("잘못된 요청입니다.", e);
+        } catch (BadRequestException e) {
+            System.err.println("목록 불러오기 실패: " + e.getMessage());
         }
 
         // 오류 처리
@@ -605,7 +594,7 @@ public Page<BoardResponse> listAllByBoardTypeWithSort(int page, int size, String
     // 상대방 프로필 검색 (포스트 갯수 와 자기소개, url 등등 확인 가능)
     public UserResponse listOthersProfile(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
         int postCntByUser = (int) boardRepository.countByUserUserKey(user.getUserKey());
         return UserResponse.ofOtherUserProfile(user, postCntByUser);
     }

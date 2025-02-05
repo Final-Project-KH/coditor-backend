@@ -40,9 +40,8 @@ public class CommunityController {
 
     // 게시글 삭제시 게시글 번호를 전달 받아 서비스에서 해당 로직으로 연결
     @DeleteMapping("/delete/post")
-    ResponseEntity<Boolean> deletePost(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestParam Long id) {
-        return ResponseEntity.ok(communityService.deletePost(authorizationHeader, id));
+    ResponseEntity<Boolean> deletePost(@RequestParam Long id) {
+        return ResponseEntity.ok(communityService.deletePost(id));
     }
 
 
@@ -56,7 +55,6 @@ public class CommunityController {
                                                 @RequestParam(required = false) String status,
                                                 @RequestParam(required = false) String enumFilter,
                                                 @RequestParam(required = false) String search) {
-        log.info("Status: " + status);  // "ACTIVE"로 잘 전달되는지 확인
         return ResponseEntity.ok(communityService.listAllByBoardTypeWithSort(page, size, boardType, sortBy, order, status, enumFilter, search));
     }
 
@@ -84,23 +82,20 @@ public class CommunityController {
 
     // 댓글 생성
     @PostMapping("/add/comment")
-    ResponseEntity<Boolean> addComment(@RequestHeader("Authorization") String authorizationHeader,
-                                      @RequestBody CommentRequest commentRequest) {
-        return ResponseEntity.ok(communityService.addComment(authorizationHeader, commentRequest));
+    ResponseEntity<Boolean> addComment(@RequestBody CommentRequest commentRequest) {
+        return ResponseEntity.ok(communityService.addComment(commentRequest));
     }
 
     // 댓글 수정
     @PutMapping("/modify/comment")
-    ResponseEntity<Boolean> modifyComment(@RequestHeader("Authorization") String authorizationHeader,
-                                          @RequestBody CommentRequest commentRequest) {
-        return ResponseEntity.ok(communityService.modifyComment(authorizationHeader, commentRequest));
+    ResponseEntity<Boolean> modifyComment(@RequestBody CommentRequest commentRequest) {
+        return ResponseEntity.ok(communityService.modifyComment(commentRequest));
     }
 
     // 댓글 삭제
     @DeleteMapping("/delete/comment")
-    ResponseEntity<Boolean> deleteComment(@RequestHeader("Authorization") String authorizationHeader,
-                                          @RequestParam Long id) {
-        return ResponseEntity.ok(communityService.deleteComment(authorizationHeader, id));
+    ResponseEntity<Boolean> deleteComment(@RequestParam Long id) {
+        return ResponseEntity.ok(communityService.deleteComment(id));
     }
 
     // 게시글 내 좋아요 싫어요 클릭시 요청 / 응답

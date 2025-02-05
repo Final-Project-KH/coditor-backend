@@ -1,21 +1,22 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.dto.request.ReportCommentRequest;
 import com.kh.totalproject.dto.request.ReportRequest;
 import com.kh.totalproject.dto.request.SuggestRequest;
-import com.kh.totalproject.dto.request.SuggestionCommentRequest;
 import com.kh.totalproject.dto.response.ReportCommentResponse;
 import com.kh.totalproject.dto.response.SuggestionCommentResponse;
 import com.kh.totalproject.entity.*;
+import com.kh.totalproject.exception.BadRequestException;
+import com.kh.totalproject.exception.ForbiddenException;
+import com.kh.totalproject.exception.NotFoundException;
 import com.kh.totalproject.repository.*;
 import com.kh.totalproject.util.JwtUtil;
+import com.kh.totalproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,16 +35,11 @@ public class CsService {
     private final JwtUtil jwtUtil;
 
     // 신고 게시글 생성 서비스
-    public Boolean createReportPost(String authorizationHeader, ReportRequest reportRequest) {
+    public Boolean createReportPost(ReportRequest reportRequest) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. "));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             Board board = boardRepository.findById(reportRequest.getBoardId())
                     .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다"));
@@ -66,16 +62,11 @@ public class CsService {
     }
 
     // 건의사항 게시글 생성 서비스
-    public Boolean createSuggestionPost(String authorizationHeader, SuggestRequest suggestRequest) {
+    public Boolean createSuggestionPost(SuggestRequest suggestRequest) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: " + userId));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
 
             // setName 으로 닉네임을 변수값으로 지정
             suggestRequest.setName(user.getNickname()); // 여기서 굳이 Nickname 으로 저장 할 필요 없이 userKey 로 저장 - 추후에 수정 필요
@@ -88,16 +79,17 @@ public class CsService {
         }
     }
 
-    public Page<ReportCommentResponse> listReportComment(String authorizationHeader, Long reportId, int page, int size, String sortBy, String order) {
+    // 유저가 작성한 Report 게시판에서의 관리자 답변 보기
+    public Page<ReportCommentResponse> listReportComment(Long reportId, int page, int size, String sortBy, String order) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
+            ReportBoard reportBoard = reportRepository.findById(reportId)
+                    .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
+            if (!user.getUserKey().equals(reportBoard.getUser().getUserKey())) {
+                throw new ForbiddenException("댓글을 열람 할 권한이 없습니다.");
+            }
             if (sortBy == null || sortBy.isEmpty()) {
                 sortBy = "createdAt";  // 기본적으로 최신순
             }
@@ -107,22 +99,23 @@ public class CsService {
             Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
             Pageable pageable = PageRequest.of(page - 1, size, sort);
             Page<ReportComment> reportComments = reportCommentRepository.findByReportBoard_Id(reportId, pageable);
-            return reportComments.map(ReportCommentResponse::ofAllComment);
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+            return reportComments.map(ReportCommentResponse::ofAdminReply);
+        } catch (BadRequestException e) {
+            throw new BadRequestException("신고 게시글 답변 불러오기 실패." + e);
         }
     }
 
-    public Page<SuggestionCommentResponse> listSuggestionComment(String authorizationHeader, Long suggestionId, int page, int size, String sortBy, String order) {
+    // 유저가 작성한 Suggestion 게시판에서의 관리자 답변 보기
+    public Page<SuggestionCommentResponse> listSuggestionComment(Long suggestionId, int page, int size, String sortBy, String order) {
         try {
-            String token = authorizationHeader.replace("Bearer ", "");
-            // 토큰에서 인증 정보 확인
-            jwtUtil.getAuthentication(token);
-            // Access 토큰에서 id 추출
-            Long userId = jwtUtil.extractUserId(token);
-
-            userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
+            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionId)
+                    .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
+            if (!user.getUserKey().equals(suggestionBoard.getUser().getUserKey())) {
+                throw new ForbiddenException("댓글을 열람 할 권한이 없습니다.");
+            }
             if (sortBy == null || sortBy.isEmpty()) {
                 sortBy = "createdAt";  // 기본적으로 최신순
             }
@@ -132,9 +125,9 @@ public class CsService {
             Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
             Pageable pageable = PageRequest.of(page - 1, size, sort);
             Page<SuggestionComment> suggestionComments = suggestionCommentRepository.findBySuggestionBoard_Id(suggestionId, pageable);
-            return suggestionComments.map(SuggestionCommentResponse::ofAllComment);
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
+            return suggestionComments.map(SuggestionCommentResponse::ofAdminReply);
+        } catch (BadRequestException e) {
+            throw new BadRequestException("건의사항 게시글 답변 불러오기 실패." + e);
         }
     }
 
@@ -222,47 +215,39 @@ public class CsService {
 //        return null;
 //    }
 //
-//    public Boolean DeleteReportPost(String authorizationHeader, Long commentId) {
-//        try {
-//            String token = authorizationHeader.replace("Bearer ", "");
-//            // 토큰에서 인증 정보 확인
-//            jwtUtil.getAuthentication(token);
-//            // Access 토큰에서 id 추출
-//            Long userId = jwtUtil.extractUserId(token);
-//
-//            User user = userRepository.findById(userId)
-//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-//            ReportComment reportComment = reportCommentRepository.findById(commentId)
-//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-//            if (!reportComment.getUser().getUserKey().equals(user.getUserKey())) {
-//                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
-//            }
-//            reportCommentRepository.deleteById(commentId);
-//            return true;
-//        } catch (AccessDeniedException e) {
-//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-//        }
-//    }
-//
-//    public Boolean DeleteSuggestionPost(String authorizationHeader, Long commentId) {
-//        try {
-//            String token = authorizationHeader.replace("Bearer ", "");
-//            // 토큰에서 인증 정보 확인
-//            jwtUtil.getAuthentication(token);
-//            // Access 토큰에서 id 추출
-//            Long userId = jwtUtil.extractUserId(token);
-//
-//            User user = userRepository.findById(userId)
-//                    .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-//            SuggestionComment suggestionComment = suggestionCommentRepository.findById(commentId)
-//                    .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
-//            if (!suggestionComment.getUser().getUserKey().equals(user.getUserKey())) {
-//                throw new AccessDeniedException("해당 댓글을 삭제 할 권한이 없습니다.");
-//            }
-//            suggestionCommentRepository.deleteById(commentId);
-//            return true;
-//        } catch (AccessDeniedException e) {
-//            throw new AccessDeniedException("해당글의 댓글을 열람 할 권한이 없습니다.");
-//        }
-//    }
+    public Boolean DeleteReportPost(Long reportId) {
+        try {
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
+            ReportBoard reportBoard = reportRepository.findById(reportId)
+                    .orElseThrow(() -> new NotFoundException("해당 댓글을 찾을 수 없습니다."));
+            if (!reportBoard.getUser().getUserKey().equals(user.getUserKey())) {
+                throw new ForbiddenException("해당 게시글을 삭제 할 권한이 없습니다.");
+            } else {
+                reportRepository.deleteById(reportId);
+                return true;
+            }
+        } catch (BadRequestException e) {
+            throw new BadRequestException("게시글 삭제 로직 실패." + e);
+        }
+    }
+
+    public Boolean DeleteSuggestionPost(Long suggestionId) {
+        try {
+            Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
+            User user = userRepository.findById(userKey)
+                    .orElseThrow(() -> new NotFoundException("해당 유저를 찾을 수 없습니다."));
+            SuggestionBoard suggestionBoard = suggestionRepository.findById(suggestionId)
+                    .orElseThrow(() -> new NotFoundException("해당 댓글을 찾을 수 없습니다."));
+            if (!suggestionBoard.getUser().getUserKey().equals(user.getUserKey())) {
+                throw new ForbiddenException("해당 게시글을 삭제 할 권한이 없습니다.");
+            } else {
+                suggestionRepository.deleteById(suggestionId);
+                return true;
+            }
+        } catch (BadRequestException e) {
+            throw new BadRequestException("게시글 삭제 로직 실패." + e);
+        }
+    }
 }

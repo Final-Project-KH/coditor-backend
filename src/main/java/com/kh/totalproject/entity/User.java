@@ -16,8 +16,9 @@ import java.util.List;
 // 프로필 이미지 추가?
 // Refresh Token 데이터베이스에 저장 필요?
 @Entity
-@Table(name="user", uniqueConstraints = {
-        @UniqueConstraint(name = "unique_email", columnNames = "email"),})
+@Table(name = "user", uniqueConstraints = {
+        @UniqueConstraint(name = "unique_email_combination", columnNames = {"email", "googleemail", "kakaoemail", "naveremail"})
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @ToString
 @NoArgsConstructor
@@ -35,7 +36,7 @@ public class User {
     private String userId;
 
     @Column(nullable = false, unique = true, length = 30)
-    @Size(min = 4, max = 50, message = "닉네임은 1자 이상, 16자 이하(한글 기준)")
+    @Size(min = 3, max = 50, message = "닉네임은 1자 이상, 16자 이하(한글 기준)")
     private String nickname;
 
     @Column(nullable = false, length = 50)
@@ -49,7 +50,7 @@ public class User {
     private String introduction;
     
     // 암호화 하기 때문에 max 값 255로 설정
-    @Column(nullable = false)
+    @Column()
     @Size(min = 8, max = 255, message = "비밀번호는 8자 이상, 50자 이하")
     private String password;
 
@@ -63,6 +64,16 @@ public class User {
         }
         //else this.role = Role.ADMIN;      // null 이 아닐때도 기본값이 ADMIN 이라 주석처리
     }
+
+    // 구글, 카카오, 네이버 소셜 로그인 ID
+    @Column(length = 100, nullable = true)
+    private String googleemail;
+
+    @Column(length = 100, nullable = true)
+    private String kakaoemail;
+
+    @Column(length = 100, nullable = true)
+    private String naveremail;
 
     // 게시판 연관관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -106,12 +117,30 @@ public class User {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @Builder // NoArgsConstructor 가 있어야함
-    public User(String userId, String email, String nickname, String password, Role role){
+//    @Builder // NoArgsConstructor 가 있어야함
+//    public User(String userId, String email, String nickname, String password, Role role){
+//        this.userId = userId;
+//        this.email = email;
+//        this.password = password;
+//        this.nickname = nickname;
+//        this.role = role;
+//    }
+
+    @Builder
+    public User(String userId, String email, String nickname, String password, Role role, String googleEmail, String kakaoEmail, String naverEmail) {
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.role = role;
+        this.googleemail = googleEmail;
+        this.kakaoemail = kakaoEmail;
+        this.naveremail = naverEmail;
+    }
+
+    // userKey만 받는 생성자 추가
+    @Builder
+    public User(Long userKey) {
+        this.userKey = userKey;
     }
 }
