@@ -19,14 +19,13 @@ public class SuggestionCommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static SuggestionCommentResponse ofAllComment(SuggestionComment suggestionComment) {
+    public static SuggestionCommentResponse ofAdminReply(SuggestionComment suggestionComment) {
         return SuggestionCommentResponse.builder()
                 .name(suggestionComment.getUser().getNickname())
                 .suggestionId(suggestionComment.getSuggestionBoard().getId())
                 .commentId(suggestionComment.getId())
                 .content(suggestionComment.getContent())
                 .createdAt(suggestionComment.getCreatedAt())
-                .updatedAt(suggestionComment.getUpdatedAt())
                 .build();
     }
 }

@@ -1,9 +1,7 @@
 package com.kh.totalproject.service;
 
-import com.kh.totalproject.dto.request.ReportCommentRequest;
 import com.kh.totalproject.dto.request.ReportRequest;
 import com.kh.totalproject.dto.request.SuggestRequest;
-import com.kh.totalproject.dto.request.SuggestionCommentRequest;
 import com.kh.totalproject.dto.response.ReportCommentResponse;
 import com.kh.totalproject.dto.response.SuggestionCommentResponse;
 import com.kh.totalproject.entity.*;
@@ -19,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,7 +125,7 @@ public class CsService {
             Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
             Pageable pageable = PageRequest.of(page - 1, size, sort);
             Page<SuggestionComment> suggestionComments = suggestionCommentRepository.findBySuggestionBoard_Id(suggestionId, pageable);
-            return suggestionComments.map(SuggestionCommentResponse::ofAllComment);
+            return suggestionComments.map(SuggestionCommentResponse::ofAdminReply);
         } catch (BadRequestException e) {
             throw new BadRequestException("건의사항 게시글 답변 불러오기 실패." + e);
         }
