@@ -144,6 +144,55 @@ public class JwtUtil {
                 .build();
     }
 
+    // 새로운 메서드: User 엔티티 기반 JWT 생성
+    public TokenResponse generateTokenFromUser(com.kh.totalproject.entity.User user) {
+        // CustomUserDetails 생성 없이 바로 JWT 발급을 위해 필요한 정보 추출
+        // 필요한 경우, CustomUserDetails를 생성할 수도 있습니다.
+        CustomUserDetails userDetails = new CustomUserDetails(
+                user.getUserId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getUserKey(),
+                user.getPassword(),
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString()))
+        );
+        return generateTokenFromUserDetails(userDetails);
+    }
+
+    // 내부적으로 JWT 생성 로직을 담당하는 메서드
+    private TokenResponse generateTokenFromUserDetails(CustomUserDetails userDetails) {
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        long now = (new Date()).getTime();
+        Date accessTokenExpiresIn = new Date(now + EXPIRATION_TIME);
+        Date refreshTokenExpiresIn = new Date(now + 60 * 60 * 1000 * 24 * 6); // 6일
+
+        // Access Token 생성
+        String accessToken = Jwts.builder()
+                .subject(String.valueOf(userDetails.getUserKey()))
+                .claim("nickname", userDetails.getNickname())
+                .claim("authorities", userDetails.getAuthorities())
+                .issuedAt(new Date())
+                .expiration(accessTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        // Refresh Token 생성
+        String refreshToken = Jwts.builder()
+                .subject(String.valueOf(userDetails.getUserKey()))
+                .claim("nickname", userDetails.getNickname())
+                .claim("authorities", userDetails.getAuthorities())
+                .issuedAt(new Date())
+                .expiration(refreshTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        return TokenResponse.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
     public Authentication getAuthentication(String token){
         Claims claims = parseToken(token);
 
