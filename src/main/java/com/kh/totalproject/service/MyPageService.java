@@ -292,4 +292,36 @@ public class MyPageService {
         }
         return true;
     }
+    public boolean connectGoogleEmail(String authorizationHeader){
+        String token = authorizationHeader.replace("Bearer ", ""); // Bearer 제거
+        jwtUtil.getAuthentication(token); // 인증 정보 생성
+        Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        String googelemail = user.getGoogleemail();
+        if(googelemail == null) {return false;}
+        else return true;
+    }
+
+    public boolean connectKakaoEmail(String authorizationHeader){
+        String token = authorizationHeader.replace("Bearer ", ""); // Bearer 제거
+        jwtUtil.getAuthentication(token); // 인증 정보 생성
+        Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        String kakaoemail = user.getKakaoemail();
+        if(kakaoemail == null) {return false;}
+        else return true;
+    }
+
+    public boolean connectNaverEmail(String authorizationHeader){
+        String token = authorizationHeader.replace("Bearer ", ""); // Bearer 제거
+        jwtUtil.getAuthentication(token); // 인증 정보 생성
+        Long id = jwtUtil.extractUserId(token); // 토큰에서 ID 추출
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        String naveremail = user.getNaveremail();
+        if(naveremail == null) {return false;}
+        else return true;
+    }
 }
