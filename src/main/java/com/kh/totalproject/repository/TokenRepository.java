@@ -16,4 +16,6 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
     @Modifying
     @Query("DELETE FROM Token t WHERE t.user.userKey = :userKey")
     void deleteByUserKey(@Param("userKey") Long userKey);
+
+    Optional<Token> findByUserUserKey(Long userKey);  // User의 userKey를 참조하도록 수정
 }
