@@ -93,28 +93,32 @@ public class Board {
         comment.setBoard(null);
     }
 
+    // 좋아요/싫어요 수 계산 (boardReactions 기준으로만 계산)
     public int getLikeCnt() {
-        int calculatedLikeCnt = (int) boardReactions.stream()
-                .filter(reaction -> reaction.getReaction().equals(Reaction.LIKE))
+        return (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.LIKE)
                 .count();
-        return (likeCnt != null ? likeCnt : 0) + calculatedLikeCnt;
     }
 
     public int getDislikeCnt() {
-        int calculatedDislikeCnt = (int) boardReactions.stream()
-                .filter(reaction -> reaction.getReaction().equals(Reaction.DISLIKE))
+        return (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.DISLIKE)
                 .count();
-        return (dislikeCnt != null ? dislikeCnt : 0) + calculatedDislikeCnt;
     }
 
-//    // 게시글의 좋아요, 싫어요 카운트를 업데이트하는 메서드
-//    public void updateLikeDislikeCounts() {
-//        int likeCount = (int) boardReactions.stream().filter(reaction -> reaction.getReaction() == Reaction.LIKE).count();
-//        int dislikeCount = (int) boardReactions.stream().filter(reaction -> reaction.getReaction() == Reaction.DISLIKE).count();
-//
-//        this.likeCnt = likeCount;
-//        this.dislikeCnt = dislikeCount;
-//    }
+    // 좋아요/싫어요 수 업데이트
+    public void updateLikeDislikeCounts() {
+        int likeCount = (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.LIKE)
+                .count();
+        int dislikeCount = (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.DISLIKE)
+                .count();
+
+        // DB에서 관리하는 카운트 값으로 업데이트
+        this.likeCnt = likeCount;
+        this.dislikeCnt = dislikeCount;
+    }
 
 
 

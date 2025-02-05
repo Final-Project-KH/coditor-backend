@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -148,6 +150,7 @@ public class CommunityService {
     }
 
     private Board updateBoard(BoardRequest boardRequest, Board existingBoard, User user, BoardType type) {
+        // 게시글 타입에 따라 수정된 게시글 생성
         Board updatedBoard = switch (type) {
             case CODING -> boardRequest.toModifyCodingPost(user, (CodingBoard) existingBoard);
             case COURSE -> boardRequest.toModifyCoursePost(user, (CourseBoard) existingBoard);
@@ -155,14 +158,20 @@ public class CommunityService {
             case TEAM -> boardRequest.toModifyTeamPost(user, (TeamBoard) existingBoard);
         };
 
+        // 기존의 좋아요/싫어요/조회수 카운트를 유지
+        updatedBoard.setCommentCnt(existingBoard.getCommentCnt());
         updatedBoard.setLikeCnt(existingBoard.getLikeCnt());
         updatedBoard.setDislikeCnt(existingBoard.getDislikeCnt());
         updatedBoard.setViewCnt(existingBoard.getViewCnt());
 
+        // 기존의 BoardReaction 엔티티를 수정된 게시글에 반영
+        updatedBoard.setBoardReactions(new ArrayList<>(existingBoard.getBoardReactions()));  // List 타입으로 변환
+
+        // 반응 상태를 갱신
+        updateLikeDislikeCounts(updatedBoard);
+
         return updatedBoard;
     }
-
-
 
 
 
@@ -379,7 +388,7 @@ public class CommunityService {
             }
             case TEAM -> {
                 TeamBoard teamBoard = (TeamBoard) board;
-                yield BoardResponse.ofOneTeamPost(teamBoard, commentCnt, postCntByUser, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+                yield BoardResponse.ofOneTeamPost(teamBoard, postCntByUser, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
     }
@@ -483,9 +492,7 @@ public class CommunityService {
         }
     }
 
-    // 좋아요/싫어요 토글
     public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
-
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
         User user = userRepository.findById(userId)
@@ -500,33 +507,40 @@ public class CommunityService {
                 boardReactionRepository.delete(reaction);
                 board.getBoardReactions().remove(reaction);
             } else {
+                // 다른 반응을 클릭한 경우 (예: 좋아요 -> 싫어요)
                 reaction.setReaction(reactionType);
-                boardReactionRepository.save(reaction);
+                boardReactionRepository.save(reaction);  // 반응 수정
             }
         } else {
-            // 같은 사용자가 새롭게 좋아요, 실헝용 클릭 했을때
+            // 새로운 반응 추가
             BoardReaction newReaction = BoardReaction.builder()
                     .board(board)
                     .user(user)
                     .reaction(reactionType)
                     .build();
             board.getBoardReactions().add(newReaction);
-            boardReactionRepository.save(newReaction); // 좋아요 싫어요 새로 저장 변하는 값 방지
+            boardReactionRepository.save(newReaction);  // 새 반응 저장
         }
 
-        updateLikeDislikeCounts(board);
+        // 좋아요/싫어요 수 갱신
+        updateLikeDislikeCounts(board);  // 이 부분에서 중복 호출을 방지하려면
+        // 반응을 수정한 후에 다시 카운트를 업데이트해야 합니다.
 
-        boardRepository.save(board);
+        // 게시글 상태를 반영
+        boardRepository.save(board);  // 반영된 결과를 DB에 저장
     }
 
-    // 좋아요 싫어요 갱신
+    // 좋아요/싫어요 수 갱신
     private void updateLikeDislikeCounts(Board board) {
+        // 좋아요와 싫어요 카운트를 갱신
         int likeCount = (int) board.getBoardReactions().stream().filter(reaction -> reaction.getReaction() == Reaction.LIKE).count();
         int dislikeCount = (int) board.getBoardReactions().stream().filter(reaction -> reaction.getReaction() == Reaction.DISLIKE).count();
 
+        // 게시글의 좋아요/싫어요 수 업데이트
         board.setLikeCnt(likeCount);
         board.setDislikeCnt(dislikeCount);
     }
+
 
     // 사용자 좋아요 싫어요 클릭시 확인 Status 구현
     public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
@@ -538,6 +552,7 @@ public class CommunityService {
         Reaction userReaction = board.getUserReaction(user);
         int likeCnt = board.getLikeCnt();
         int dislikeCnt = board.getDislikeCnt();
+
 
         return new BoardReactionResponse(userReaction, likeCnt, dislikeCnt);
     }
