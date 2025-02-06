@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -81,7 +83,6 @@ public class CommunityService {
         };
     }
 
-    // 게시글 수정 서비스
     public Boolean modifyPost(BoardRequest boardRequest, String boardType) {
         try {
             Long userKey = SecurityUtil.getCurrentUserIdOrThrow();
@@ -94,16 +95,21 @@ public class CommunityService {
 
             // 게시글 작성자가 맞는지 확인
             if (!existingBoard.getUser().getUserKey().equals(user.getUserKey())) {
-                throw new ForbiddenException("이 글을 삭제 할 권한이 없습니다.");
+                throw new ForbiddenException("이 글을 수정할 권한이 없습니다.");
             }
+
+            // 글 수정 처리
             Board updatedBoard = updateBoard(boardRequest, existingBoard, user, type);
-            // 수정된 게시글 저장 return true
+
+            // 수정된 게시글 저장 (좋아요/싫어요 카운트는 수정하지 않음)
             return saveBoardEntity(updatedBoard);
         } catch (BadRequestException e) {
             System.err.println("게시글 수정 실패: " + e.getMessage());
             return false;
         }
     }
+
+
 
     // 게시글 삭제 서비스 로직
     public Boolean deletePost(Long id) {
@@ -143,15 +149,31 @@ public class CommunityService {
         };
     }
 
-    // 해당하는 RequestDto 를 업데이트 하는 메서드
     private Board updateBoard(BoardRequest boardRequest, Board existingBoard, User user, BoardType type) {
-        return switch (type) {
+        // 게시글 타입에 따라 수정된 게시글 생성
+        Board updatedBoard = switch (type) {
             case CODING -> boardRequest.toModifyCodingPost(user, (CodingBoard) existingBoard);
             case COURSE -> boardRequest.toModifyCoursePost(user, (CourseBoard) existingBoard);
             case STUDY -> boardRequest.toModifyStudyPost(user, (StudyBoard) existingBoard);
             case TEAM -> boardRequest.toModifyTeamPost(user, (TeamBoard) existingBoard);
         };
+
+        // 기존의 좋아요/싫어요/조회수 카운트를 유지
+        updatedBoard.setCommentCnt(existingBoard.getCommentCnt());
+        updatedBoard.setLikeCnt(existingBoard.getLikeCnt());
+        updatedBoard.setDislikeCnt(existingBoard.getDislikeCnt());
+        updatedBoard.setViewCnt(existingBoard.getViewCnt());
+
+        // 기존의 BoardReaction 엔티티를 수정된 게시글에 반영
+        updatedBoard.setBoardReactions(new ArrayList<>(existingBoard.getBoardReactions()));  // List 타입으로 변환
+
+        // 반응 상태를 갱신
+        updateLikeDislikeCounts(updatedBoard);
+
+        return updatedBoard;
     }
+
+
 
     // 각 게시판별 글 저장 및 업데이트
     private Boolean saveBoardEntity(Board boardEntity) {
@@ -366,7 +388,7 @@ public class CommunityService {
             }
             case TEAM -> {
                 TeamBoard teamBoard = (TeamBoard) board;
-                yield BoardResponse.ofOneTeamPost(teamBoard, commentCnt, postCntByUser, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
+                yield BoardResponse.ofOneTeamPost(teamBoard, postCntByUser, commentCnt, teamBoard.getLikeCnt(), teamBoard.getDislikeCnt());
             }
         };
     }
@@ -470,7 +492,6 @@ public class CommunityService {
         }
     }
 
-    // 토글방법 좋아요 싫어요 클릭
     public void toggleReaction(Long boardId, Long userId, Reaction reactionType) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NotFoundException("해당 게시글을 찾을 수 없습니다."));
@@ -482,12 +503,13 @@ public class CommunityService {
         if (existingReaction.isPresent()) {
             BoardReaction reaction = existingReaction.get();
             if (reaction.getReaction() == reactionType) {
-                // 같은 반응을 다시 누르면 반응 제거
+                // 같은 반응을 다시 누르면 반응 삭제
                 boardReactionRepository.delete(reaction);
                 board.getBoardReactions().remove(reaction);
             } else {
-                // 다른 반응으로 변경
+                // 다른 반응을 클릭한 경우 (예: 좋아요 -> 싫어요)
                 reaction.setReaction(reactionType);
+                boardReactionRepository.save(reaction);  // 반응 수정
             }
         } else {
             // 새로운 반응 추가
@@ -497,14 +519,28 @@ public class CommunityService {
                     .reaction(reactionType)
                     .build();
             board.getBoardReactions().add(newReaction);
-            boardReactionRepository.save(newReaction);
+            boardReactionRepository.save(newReaction);  // 새 반응 저장
         }
 
-        // 좋아요와 싫어요 수 업데이트
-        board.setLikeCnt(board.getLikeCnt());
-        board.setDislikeCnt(board.getDislikeCnt());
-        boardRepository.save(board);
+        // 좋아요/싫어요 수 갱신
+        updateLikeDislikeCounts(board);  // 이 부분에서 중복 호출을 방지하려면
+        // 반응을 수정한 후에 다시 카운트를 업데이트해야 합니다.
+
+        // 게시글 상태를 반영
+        boardRepository.save(board);  // 반영된 결과를 DB에 저장
     }
+
+    // 좋아요/싫어요 수 갱신
+    private void updateLikeDislikeCounts(Board board) {
+        // 좋아요와 싫어요 카운트를 갱신
+        int likeCount = (int) board.getBoardReactions().stream().filter(reaction -> reaction.getReaction() == Reaction.LIKE).count();
+        int dislikeCount = (int) board.getBoardReactions().stream().filter(reaction -> reaction.getReaction() == Reaction.DISLIKE).count();
+
+        // 게시글의 좋아요/싫어요 수 업데이트
+        board.setLikeCnt(likeCount);
+        board.setDislikeCnt(dislikeCount);
+    }
+
 
     // 사용자 좋아요 싫어요 클릭시 확인 Status 구현
     public BoardReactionResponse getReactionStatus(Long boardId, Long userId) {
@@ -517,9 +553,9 @@ public class CommunityService {
         int likeCnt = board.getLikeCnt();
         int dislikeCnt = board.getDislikeCnt();
 
+
         return new BoardReactionResponse(userReaction, likeCnt, dislikeCnt);
     }
-
     // Top Writer 10명 사이드바 구현 JPQL 사용하여 복합 쿼리 생성 list 0 번에유저, 1번에 글작성 횟수
     public List<BoardResponse> getTopWriterBoard() {
         // Pageable 사용해 0페이지 10개 제한 (10명)

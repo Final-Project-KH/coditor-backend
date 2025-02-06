@@ -64,7 +64,7 @@ public class SuggestionBoard {
     @JoinColumn(name = "user_key", nullable = false,  referencedColumnName = "user_key")  // FK 컬럼 지정
     private User user;
 
-    @OneToMany(mappedBy = "suggestionBoard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "suggestionBoard", cascade = CascadeType.REMOVE)
     @Builder.Default
     private List<SuggestionComment> suggestionComments = new ArrayList<>();
 

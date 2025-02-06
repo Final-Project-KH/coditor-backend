@@ -154,6 +154,7 @@ public class NaverService {
             // User 객체 생성 및 정보 설정
             User member = new User();
             member.setEmail(email);
+            member.setNaveremail(email);
             member.setUserId(userId);  // 이메일 기반 사용자 ID 설정
             member.setNickname("User_" + UUID.randomUUID().toString().substring(0, 8));  // 랜덤 닉네임 생성
             member.setPassword(null);  // 기본 비밀번호를 NULL로 설정

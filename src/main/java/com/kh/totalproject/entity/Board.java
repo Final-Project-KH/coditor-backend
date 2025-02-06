@@ -27,8 +27,9 @@ public class Board {
 
     private int viewCnt = 0;
     private int commentCnt = 0;
-    private int likeCnt = 0;
-    private int dislikeCnt = 0;
+    private Integer likeCnt = 0;
+    private Integer dislikeCnt = 0;
+
 
     private String imgUrl;
     private LocalDateTime createdAt;
@@ -76,7 +77,7 @@ public class Board {
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReportBoard> reportBoards = new ArrayList<>();
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -92,19 +93,34 @@ public class Board {
         comment.setBoard(null);
     }
 
-    // 좋아요 수를 동적으로 계산하고 likeCnt 필드를 업데이트
+    // 좋아요/싫어요 수 계산 (boardReactions 기준으로만 계산)
     public int getLikeCnt() {
         return (int) boardReactions.stream()
-                .filter(reaction -> reaction.getReaction().equals(Reaction.LIKE))
+                .filter(reaction -> reaction.getReaction() == Reaction.LIKE)
                 .count();
     }
 
-    // 싫어요 수를 동적으로 계산
     public int getDislikeCnt() {
         return (int) boardReactions.stream()
-                .filter(reaction -> reaction.getReaction().equals(Reaction.DISLIKE))
+                .filter(reaction -> reaction.getReaction() == Reaction.DISLIKE)
                 .count();
     }
+
+    // 좋아요/싫어요 수 업데이트
+    public void updateLikeDislikeCounts() {
+        int likeCount = (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.LIKE)
+                .count();
+        int dislikeCount = (int) boardReactions.stream()
+                .filter(reaction -> reaction.getReaction() == Reaction.DISLIKE)
+                .count();
+
+        // DB에서 관리하는 카운트 값으로 업데이트
+        this.likeCnt = likeCount;
+        this.dislikeCnt = dislikeCount;
+    }
+
+
 
     // 사용자의 반응을 처리 (사용자가 좋아요, 싫어요를 했는지 확인)
     public Reaction getUserReaction(User user) {

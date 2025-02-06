@@ -68,7 +68,7 @@ public class ReportBoard {
     @JoinColumn(name = "board_id", nullable = false, referencedColumnName = "board_id")
     private Board board;
 
-    @OneToMany(mappedBy = "reportBoard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "reportBoard", cascade = CascadeType.REMOVE)
     @Builder.Default
     private List<ReportComment> reportComments = new ArrayList<>();
 

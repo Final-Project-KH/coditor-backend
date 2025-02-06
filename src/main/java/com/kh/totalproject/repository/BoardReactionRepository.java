@@ -14,9 +14,12 @@ import java.util.Optional;
 public interface BoardReactionRepository extends JpaRepository<BoardReaction, Long> {
     Optional<BoardReaction> findByBoardAndUser(Board board, User user);
 
+    // 특정 게시글에 대한 좋아요 수 카운트
     @Query("SELECT COUNT(br) FROM BoardReaction br WHERE br.board.id = :boardId AND br.reaction = 'LIKE'")
     int countLikesByBoardId(@Param("boardId") Long boardId);
 
+    // 특정 게시글에 대한 싫어요 수 카운트
     @Query("SELECT COUNT(br) FROM BoardReaction br WHERE br.board.id = :boardId AND br.reaction = 'DISLIKE'")
     int countDislikesByBoardId(@Param("boardId") Long boardId);
+
 }
