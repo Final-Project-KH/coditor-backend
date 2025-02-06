@@ -19,19 +19,9 @@ public class ReportCommentRequest {
 
     public ReportComment toAddComment(User user, ReportBoard reportBoard) {
         return ReportComment.builder()
-                .content(this.content)
+                .content(content)
                 .user(user)
                 .reportBoard(reportBoard)
-                .build();
-    }
-
-    public ReportComment toModifyComment(User user, ReportBoard reportBoard, ReportComment existingData) {
-        return ReportComment.builder()
-                .id(commentId)
-                .content(this.content != null ? this.content : existingData.getContent())
-                .user(user)
-                .reportBoard(reportBoard)
-                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 }

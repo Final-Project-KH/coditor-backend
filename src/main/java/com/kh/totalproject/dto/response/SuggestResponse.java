@@ -26,6 +26,7 @@ public class SuggestResponse {
     public static SuggestResponse ofSuggestionPostList(SuggestionBoard suggestionBoard) {
         return SuggestResponse.builder()
                 .suggestionId(suggestionBoard.getId())
+                .name(suggestionBoard.getUser().getNickname())
                 .title(suggestionBoard.getTitle())
                 .createdAt(suggestionBoard.getCreatedAt())
                 .status(suggestionBoard.getStatus())
@@ -36,6 +37,7 @@ public class SuggestResponse {
     public static SuggestResponse ofOneSuggestionPost(SuggestionBoard suggestionBoard) {
         return SuggestResponse.builder()
                 .suggestionId(suggestionBoard.getId())
+                .name(suggestionBoard.getUser().getNickname())
                 .title(suggestionBoard.getTitle())
                 .content(suggestionBoard.getContent())
                 .createdAt(suggestionBoard.getCreatedAt())

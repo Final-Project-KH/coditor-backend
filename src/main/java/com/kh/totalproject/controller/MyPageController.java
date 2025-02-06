@@ -59,64 +59,60 @@ public class MyPageController {
 
     // 내가 작성한 신고 작성 글 목록 보기 요청 / 응답
     @GetMapping("/report/list")
-    public ResponseEntity<Page<ReportResponse>> listMyReportPost(@RequestHeader("Authorization") String authorizationHeader,
-                                                                 @RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<Page<ReportResponse>> listMyReportPost(@RequestParam(defaultValue = "1") int page,
                                                                  @RequestParam(defaultValue = "10") int size,
-                                                                 @RequestParam(required = false) String sortBy,
-                                                                 @RequestParam(required = false) String order) {
-        return ResponseEntity.ok(myPageService.myReportList(authorizationHeader, page, size, sortBy, order));
+                                                                 @RequestParam(defaultValue = "createdAt") String sortBy,
+                                                                 @RequestParam(defaultValue = "DESC") String order,
+                                                                 @RequestParam(defaultValue = "INACTIVE") String status) {
+        return ResponseEntity.ok(myPageService.myReportList(page, size, sortBy, order, status));
     }
 
     // 내가 작성한 건의사항 작성 글 목록 보기 요청 / 응답
     @GetMapping("/suggestion/list")
-    public ResponseEntity<Page<SuggestResponse>> listMySuggestionPost(@RequestHeader("Authorization") String authorizationHeader,
-                                                                      @RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<Page<SuggestResponse>> listMySuggestionPost(@RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "10") int size,
-                                                                      @RequestParam(required = false) String sortBy,
-                                                                      @RequestParam(required = false) String order) {
-        return ResponseEntity.ok(myPageService.mySuggestionList(authorizationHeader, page, size, sortBy, order));
+                                                                      @RequestParam(defaultValue = "createdAt") String sortBy,
+                                                                      @RequestParam(defaultValue = "DESC") String order,
+                                                                      @RequestParam(defaultValue = "INACTIVE") String status) {
+        return ResponseEntity.ok(myPageService.mySuggestionList(page, size, sortBy, order, status));
     }
 
     // 내가 작성한 신고 글 자세히 보기 요청 / 응답
     @GetMapping("/listOne/reportPost")
-    public ResponseEntity<ReportResponse> MyReportPost(@RequestHeader("Authorization") String authorizationHeader,
-                                                              @RequestParam long id) {
-        return ResponseEntity.ok(myPageService.myReportPost(authorizationHeader, id));
+    public ResponseEntity<ReportResponse> MyReportPost(@RequestParam long reportId) {
+        return ResponseEntity.ok(myPageService.myReportPost(reportId));
     }
 
     // 내가 작성한 건의사항 글 자세히 보기 요청 / 응답
     @GetMapping("/listOne/suggestionPost")
-    public ResponseEntity<SuggestResponse> MySuggestionPost(@RequestHeader("Authorization") String authorizationHeader,
-                                                              @RequestParam long id) {
-        return ResponseEntity.ok(myPageService.mySuggestionPost(authorizationHeader, id));
+    public ResponseEntity<SuggestResponse> MySuggestionPost(@RequestParam long suggestionId) {
+        return ResponseEntity.ok(myPageService.mySuggestionPost(suggestionId));
     }
 
-    // 내가 작성한 신고 글 수정
-    @PutMapping("/modify/reportPost")
-    public ResponseEntity<Boolean> modifyMyReport(@RequestHeader("Authorization") String authorizationHeader,
-                                                  @RequestBody ReportRequest reportRequest) {
-        return ResponseEntity.ok(myPageService.modifyMyReport(authorizationHeader, reportRequest));
-    }
-
-    // 내가 작성한 건의사항 글 수정
-    @PutMapping("/modify/suggestionPost")
-    public ResponseEntity<Boolean> modifyMySuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                      @RequestBody SuggestRequest suggestRequest) {
-        return ResponseEntity.ok(myPageService.modifyMySuggestion(authorizationHeader, suggestRequest));
-    }
+//    // 내가 작성한 신고 글 수정
+//    @PutMapping("/modify/reportPost")
+//    public ResponseEntity<Boolean> modifyMyReport(@RequestHeader("Authorization") String authorizationHeader,
+//                                                  @RequestBody ReportRequest reportRequest) {
+//        return ResponseEntity.ok(myPageService.modifyMyReport(authorizationHeader, reportRequest));
+//    }
+//
+//    // 내가 작성한 건의사항 글 수정
+//    @PutMapping("/modify/suggestionPost")
+//    public ResponseEntity<Boolean> modifyMySuggestion(@RequestHeader("Authorization") String authorizationHeader,
+//                                                      @RequestBody SuggestRequest suggestRequest) {
+//        return ResponseEntity.ok(myPageService.modifyMySuggestion(authorizationHeader, suggestRequest));
+//    }
 
     // 내가 작성한 신고 글 삭제
     @DeleteMapping("/delete/reportPost")
-    public ResponseEntity<Boolean> deleteMyReport(@RequestHeader("Authorization") String authorizationHeader,
-                                                  @RequestParam Long reportId) {
-        return ResponseEntity.ok(myPageService.deleteMyReportPost(authorizationHeader, reportId));
+    public ResponseEntity<Boolean> deleteMyReport(@RequestParam Long reportId) {
+        return ResponseEntity.ok(myPageService.deleteMyReportPost(reportId));
     }
 
     // 내가 작성한 건의사항 글 삭제
     @DeleteMapping("/delete/suggestionPost")
-    public ResponseEntity<Boolean> deleteMySuggestion(@RequestHeader("Authorization") String authorizationHeader,
-                                                      @RequestParam Long suggestionId) {
-        return ResponseEntity.ok(myPageService.deleteMySuggestionPost(authorizationHeader, suggestionId));
+    public ResponseEntity<Boolean> deleteMySuggestion(@RequestParam Long suggestionId) {
+        return ResponseEntity.ok(myPageService.deleteMySuggestionPost(suggestionId));
     }
 
     @PostMapping("/profile/imageupload")

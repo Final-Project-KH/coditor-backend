@@ -101,7 +101,8 @@ public class CsService {
             Page<ReportComment> reportComments = reportCommentRepository.findByReportBoard_Id(reportId, pageable);
             return reportComments.map(ReportCommentResponse::ofAdminReply);
         } catch (BadRequestException e) {
-            throw new BadRequestException("신고 게시글 답변 불러오기 실패." + e);
+            System.err.println("게시글내 답변 조회 실패: " + e.getMessage());
+            return Page.empty();
         }
     }
 
@@ -127,7 +128,8 @@ public class CsService {
             Page<SuggestionComment> suggestionComments = suggestionCommentRepository.findBySuggestionBoard_Id(suggestionId, pageable);
             return suggestionComments.map(SuggestionCommentResponse::ofAdminReply);
         } catch (BadRequestException e) {
-            throw new BadRequestException("건의사항 게시글 답변 불러오기 실패." + e);
+            System.err.println("게시글내 답변 조회 실패: " + e.getMessage());
+            return Page.empty();
         }
     }
 

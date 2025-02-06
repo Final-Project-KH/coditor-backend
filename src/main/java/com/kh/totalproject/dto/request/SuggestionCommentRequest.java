@@ -17,19 +17,9 @@ public class SuggestionCommentRequest {
 
     public SuggestionComment toAddComment(User user, SuggestionBoard suggestionBoard) {
         return SuggestionComment.builder()
-                .content(this.content)
+                .content(content)
                 .user(user)
                 .suggestionBoard(suggestionBoard)
-                .build();
-    }
-
-    public SuggestionComment toModifyComment(User user, SuggestionBoard suggestionBoard, SuggestionComment existingData) {
-        return SuggestionComment.builder()
-                .id(commentId)
-                .content(this.content != null ? this.content : existingData.getContent())
-                .user(user)
-                .suggestionBoard(suggestionBoard)
-                .createdAt(existingData.getCreatedAt())
                 .build();
     }
 }

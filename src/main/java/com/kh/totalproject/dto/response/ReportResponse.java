@@ -27,6 +27,7 @@ public class ReportResponse {
     public static ReportResponse ofReportPostList(ReportBoard reportBoard) {
         return ReportResponse.builder()
                 .reportId(reportBoard.getId())
+                .name(reportBoard.getUser().getNickname())
                 .title(reportBoard.getTitle())
                 .createdAt(reportBoard.getCreatedAt())
                 .status(reportBoard.getStatus())
@@ -38,6 +39,7 @@ public class ReportResponse {
         return ReportResponse.builder()
                 .reportId(reportBoard.getId())
                 .boardId(reportBoard.getBoard().getId())
+                .name(reportBoard.getUser().getNickname())
                 .title(reportBoard.getTitle())
                 .content(reportBoard.getContent())
                 .createdAt(reportBoard.getCreatedAt())

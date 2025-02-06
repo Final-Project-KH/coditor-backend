@@ -1,19 +1,16 @@
 /* 관리자 전용 페이지
+*  모든 Controller 작용에 Role.Admin 인지 체크
 *  유저, 게시글 에 관한 CRUD 중 Read 과 Delete 를 가능하게 하며
-*  신고 글 과 건의사항 글에 대한 답변 가능 */
+*  신고 글 과 건의사항 글에 대한 답변 가능 Create */
 
 package com.kh.totalproject.controller;
 
 import com.kh.totalproject.dto.request.ReportCommentRequest;
-import com.kh.totalproject.dto.response.ReportCommentResponse;
-import com.kh.totalproject.dto.response.ReportResponse;
-import com.kh.totalproject.dto.response.SuggestResponse;
-import com.kh.totalproject.dto.response.UserResponse;
+import com.kh.totalproject.dto.request.SuggestionCommentRequest;
 import com.kh.totalproject.service.AdminService;
 import com.kh.totalproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,78 +31,107 @@ public class AdminController {
                                              @RequestParam(defaultValue = "DESC") String order,
                                              @RequestParam(required = false) String search) {
         if (!SecurityUtil.isAdminUser()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
         }
         return ResponseEntity.ok(adminService.listAllUserInfo(page, size, sortBy, order, search));
     }
 
-//    // 유저가 작성한 신고 글 목록 요청 / 응답
-//    @GetMapping("/list/report")
-//    public ResponseEntity<Page<ReportResponse>> listAllReport(@RequestHeader("Authorization") String authorizationHeader,
-//                                                              @RequestParam(defaultValue = "1") int page,
-//                                                              @RequestParam(defaultValue = "10") int size,
-//                                                              @RequestParam(defaultValue = "createdAt") String sortBy,
-//                                                              @RequestParam(defaultValue = "DESC") String order) {
-//        return ResponseEntity.ok(adminService.listReportPost(authorizationHeader, page, size, sortBy, order));
-//    }
-//
-//    // 유저가 작성한 건의사항 글 목록 요청 / 응답
-//    @GetMapping("/list/report")
-//    public ResponseEntity<Page<SuggestResponse>> listAllSuggestion(@RequestHeader("Authorization") String authorizationHeader,
-//                                                                   @RequestParam(defaultValue = "1") int page,
-//                                                                   @RequestParam(defaultValue = "10") int size,
-//                                                                   @RequestParam(defaultValue = "createdAt") String sortBy,
-//                                                                   @RequestParam(defaultValue = "DESC") String order) {
-//        return ResponseEntity.ok(adminService.listSuggestionPost(authorizationHeader, page, size, sortBy, order));
-//    }
-//
-//    // 유저가 작성한 신고 글 삭제
-//    @DeleteMapping("delete/report")
-//    public ResponseEntity<Boolean> deleteReport(@RequestHeader("Authorization") String authorizationHeader,
-//                                                @RequestParam Long reportId) {
-//        return ResponseEntity.ok(adminService.deleteReport(authorizationHeader, reportId));
-//    }
-//
-//    // 유저가 작성한 건의사항 글 삭제
-//    @DeleteMapping("delete/suggestion")
-//    public ResponseEntity<Boolean> deleteSuggestion(@RequestHeader("Authorization") String authorizationHeader,
-//                                                    @RequestParam Long suggestionId) {
-//        return ResponseEntity.ok(adminService.deleteSuggestion(authorizationHeader, suggestionId));
-//    }
-//
-//    // 유저가 작성한 신고 글 관리자 답변 보기 요청 / 응답
-//    @GetMapping("/list/report/comment")
-//    public ResponseEntity<ReportCommentResponse> listReportReply(@RequestHeader("Authorization") String authorizationHeader) {
-//        return ResponseEntity.ok(adminService.listReportReply(authorizationHeader));
-//    }
-//
-//    // 유저가 작성한 건의사항 글 관리자 답변 보기 요청 / 응답
-//    @GetMapping("/list/suggestion/comment")
-//    public ResponseEntity<ReportCommentResponse> listSuggestionReply(@RequestHeader("Authorization") String authorizationHeader) {
-//        return ResponseEntity.ok(adminService.listSuggestionReply(authorizationHeader));
-//    }
-//
-//    // 신고 글에 대한 답변 요청 / 응답
-//    @PostMapping("/reply/report")
-//    public ResponseEntity<ReportCommentRequest> replyReport(@RequestHeader("Authorization") String authorizationHeader,
-//                                                            @RequestParam Long reportId) {
-//        return ResponseEntity.ok(adminService.replyReport(authorizationHeader, reportId));
-//    }
-//
-//    // 건의사항 글에 대한 답변 요청 / 응답
-//    @PostMapping("/reply/suggestion")
-//    public ResponseEntity<ReportCommentRequest> replySuggestion(@RequestHeader("Authorization") String authorizationHeader,
-//                                                                @RequestParam Long suggestionId) {
-//        return ResponseEntity.ok(adminService.replySuggestion(authorizationHeader, suggestionId));
-//    }
-//
-//    // 신고글에 대한 처리 글 삭제 기능
-//    @DeleteMapping("/delete/post")
-//    public ResponseEntity<Boolean> deletePost(@RequestHeader("Authorization") String authorizationHeader,
-//                                              @RequestParam Long boardId) {
-//        return ResponseEntity.ok(adminService.deletePost(authorizationHeader, boardId));
-//    }
-//
+    // 유저가 작성한 신고 글 목록 요청 / 응답
+    @GetMapping("/list/report")
+    public ResponseEntity<?> listAllReport(@RequestParam(defaultValue = "1") int page,
+                                           @RequestParam(defaultValue = "10") int size,
+                                           @RequestParam(defaultValue = "createdAt") String sortBy,
+                                           @RequestParam(defaultValue = "DESC") String order,
+                                           @RequestParam(defaultValue = "ACTIVE") String status) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.listReportPost(page, size, sortBy, order, status));
+    }
+
+    // 유저가 작성한 건의사항 글 목록 요청 / 응답
+    @GetMapping("/list/suggestion")
+    public ResponseEntity<?> listAllSuggestion(@RequestParam(defaultValue = "1") int page,
+                                               @RequestParam(defaultValue = "10") int size,
+                                               @RequestParam(defaultValue = "createdAt") String sortBy,
+                                               @RequestParam(defaultValue = "DESC") String order,
+                                               @RequestParam(defaultValue = "ACTIVE")String status) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.listSuggestionPost(page, size, sortBy, order, status));
+    }
+
+    // 유저가 작성한 신고 글 삭제 요청 / 응답 (관리자 권한)
+    @DeleteMapping("delete/report")
+    public ResponseEntity<?> deleteReport(@RequestParam Long reportId) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.deleteReportPost(reportId));
+    }
+
+    // 유저가 작성한 건의사항 글 삭제 요청 / 응답 (관리자 권한)
+    @DeleteMapping("delete/suggestion")
+    public ResponseEntity<?> deleteSuggestion(@RequestParam Long suggestionId) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.deleteSuggestionPost(suggestionId));
+    }
+
+    // 유저가 작성한 신고 글 관리자 답변 보기 요청 / 응답
+    @GetMapping("/list/report/comment")
+    public ResponseEntity<?> listReportReply(@RequestParam Long reportId,
+                                             @RequestParam(defaultValue = "1") int page,
+                                             @RequestParam(defaultValue = "10") int size,
+                                             @RequestParam(defaultValue = "createdAt") String sortBy,
+                                             @RequestParam(defaultValue = "DESC") String order) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.listReportReply(reportId, page, size, sortBy, order));
+    }
+
+    // 유저가 작성한 건의사항 글 관리자 답변 보기 요청 / 응답
+    @GetMapping("/list/suggestion/comment")
+    public ResponseEntity<?> listSuggestionReply(@RequestParam Long suggestionId,
+                                                 @RequestParam(defaultValue = "1") int page,
+                                                 @RequestParam(defaultValue = "10") int size,
+                                                 @RequestParam(defaultValue = "createdAt") String sortBy,
+                                                 @RequestParam(defaultValue = "DESC") String order) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.listSuggestionReply(suggestionId, page, size, sortBy, order));
+    }
+
+    // 신고 글에 대한 답변 요청 / 응답
+    @PostMapping("/reply/report")
+    public ResponseEntity<?> replyReport(ReportCommentRequest reportCommentRequest) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.replyReport(reportCommentRequest));
+    }
+
+    // 건의사항 글에 대한 답변 요청 / 응답
+    @PostMapping("/reply/suggestion")
+    public ResponseEntity<?> replySuggestion(SuggestionCommentRequest suggestionCommentRequest) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.replySuggestion(suggestionCommentRequest));
+    }
+
+    // 신고글에 대한 처리 글 삭제 기능
+    @DeleteMapping("/delete/post")
+    public ResponseEntity<?> deletePost(@RequestParam Long boardId) {
+        if (!SecurityUtil.isAdminUser()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("관리자 권한이 필요 합니다.");
+        }
+        return ResponseEntity.ok(adminService.deletePost(boardId));
+    }
 //    // 공지사항 글 작성
 //    @GetMapping("/list/announcement")
 //    public ResponseEntity<Page<?>> listAnnouncement() {
