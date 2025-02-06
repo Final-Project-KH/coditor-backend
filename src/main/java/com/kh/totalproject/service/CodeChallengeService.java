@@ -17,6 +17,7 @@ import com.kh.totalproject.exception.UnauthenticatedException;
 import com.kh.totalproject.repository.CodeChallengeInfoRepository;
 import com.kh.totalproject.repository.CodeChallengeSubmissionRepository;
 import com.kh.totalproject.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -27,6 +28,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,7 +50,27 @@ public class CodeChallengeService {
     private final CodeChallengeSubmissionRepository codeChallengeSubmissionRepository;
 
     private final RestTemplate restTemplate;
-    private final String FLASK_URL = "http://127.0.0.1:5000";
+
+    private String FLASK_URL;
+    private String FLASK_X_API_KEY;
+    private String FLAKS_X_CLIENT_ID;
+
+    @PostConstruct
+    public void initVariables() throws IOException {
+        Dotenv dotenv = Dotenv.load();
+
+        FLASK_URL = dotenv.get("FLASK_URL");
+        FLASK_X_API_KEY = dotenv.get("FLASK_X_API_KEY");
+        FLAKS_X_CLIENT_ID = dotenv.get("FLASK_X_CLIENT_ID");
+
+        if (
+            FLASK_URL == null || FLASK_URL.isEmpty() ||
+            FLASK_X_API_KEY == null || FLASK_X_API_KEY.isEmpty() ||
+            FLAKS_X_CLIENT_ID == null || FLAKS_X_CLIENT_ID.isEmpty()
+        ){
+            throw new RuntimeException("FLASK_URL 환경변수가 설정되지 않았습니다.");
+        }
+    }
 
     public String createJob(SubmitCodeRequest dto) {
         Map<String, Object> flaskResponse = sendRequestToFlask(FLASK_URL + "/job/create", dto, HttpMethod.POST);
@@ -289,8 +311,8 @@ public class CodeChallengeService {
         // HTTP Header 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
-        headers.set("X-Api-Key", "WfTgeAS7or5aDfFbAzlsTkmvBljTaIuEk6EFCE3i4Jc=");
-        headers.set("X-Client-Id", "spring-boot-server");
+        headers.set("X-Api-Key", FLASK_X_API_KEY);
+        headers.set("X-Client-Id", FLAKS_X_CLIENT_ID);
 
         // HttpEntity에 DTO와 Header 추가
         HttpEntity<Object> requestEntity;

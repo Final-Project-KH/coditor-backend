@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@CrossOrigin(origins = "http://localhost:5000")
 @RequestMapping("/callback")
 @RequiredArgsConstructor
 public class CallbackController {

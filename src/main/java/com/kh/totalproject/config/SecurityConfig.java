@@ -4,6 +4,7 @@ import com.kh.totalproject.util.JwtAccessDeniedHandler;
 import com.kh.totalproject.util.JwtAuthenticationEntryPoint;
 import com.kh.totalproject.util.JwtFilter;
 import com.kh.totalproject.util.JwtUtil;
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -103,8 +104,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
         configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedOrigin("http://localhost:5000");
+        configuration.addAllowedOrigin(Dotenv.load().get("FLASK_URL"));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

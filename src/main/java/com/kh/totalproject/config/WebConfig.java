@@ -1,6 +1,7 @@
 package com.kh.totalproject.config;
 
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -15,7 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**") // 모든 엔드포인트 허용
                 .allowedOrigins(
                         "http://localhost:3000", // React 개발 서버
-                        "http://localhost:5000" // Flask 서버
+                        Dotenv.load().get("FLASK_URL") // Flask 서버
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
