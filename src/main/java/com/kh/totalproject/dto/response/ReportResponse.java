@@ -28,9 +28,11 @@ public class ReportResponse {
         return ReportResponse.builder()
                 .reportId(reportBoard.getId())
                 .title(reportBoard.getTitle())
+                .content(reportBoard.getContent())
                 .createdAt(reportBoard.getCreatedAt())
                 .status(reportBoard.getStatus())
                 .report(reportBoard.getReport())
+                .name(reportBoard.getUser().getNickname())
                 .build();
     }
 
