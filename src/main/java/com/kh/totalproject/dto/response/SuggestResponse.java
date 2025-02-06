@@ -31,6 +31,7 @@ public class SuggestResponse {
                 .createdAt(suggestionBoard.getCreatedAt())
                 .status(suggestionBoard.getStatus())
                 .suggestion(suggestionBoard.getSuggestion())
+                .content(suggestionBoard.getContent())
                 .build();
     }
 
