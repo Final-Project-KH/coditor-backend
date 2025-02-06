@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/community/reaction/status",
                                 "/community/new/post", // 글쓰기시 토큰이 안넘어와서 임시로 뚫어둠
                                 "/api/code-challenge/subscribe",
+                                "/api/code-challenge/challenge/{questionId}",
                                 "/api/code-challenge/challenges/{difficulty}",
                                 "/callback/**"
                         ).permitAll()

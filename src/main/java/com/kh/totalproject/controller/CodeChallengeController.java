@@ -1,12 +1,8 @@
 package com.kh.totalproject.controller;
 
 import com.kh.totalproject.constant.ChallengeDifficulty;
-import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
-import com.kh.totalproject.dto.response.CancelJobResponse;
-import com.kh.totalproject.dto.response.ChallengeMetaResponse;
-import com.kh.totalproject.dto.response.ExecuteJobResponse;
-import com.kh.totalproject.dto.response.SubmitCodeResponse;
+import com.kh.totalproject.dto.response.*;
 import com.kh.totalproject.entity.CodeChallengeInfo;
 import com.kh.totalproject.entity.CodeChallengeSubmission;
 import com.kh.totalproject.service.CodeChallengeService;
@@ -176,15 +172,31 @@ public class CodeChallengeController {
             );
         }
 
-        CodeChallengeSubmission result = codeChallengeService.getSubmissionHistory(userId, challengeInfo);
+        List<CodeChallengeSubmission> result = codeChallengeService.getSubmissionHistory(userId, challengeInfo);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/submissions")
     public ResponseEntity<List<CodeChallengeSubmission>> getAllSubmissionHistory() {
         Long userId = getCurrentUserIdOrThrow();
-        List<CodeChallengeSubmission> results = codeChallengeService.getSubmissionHistoryList(userId);
+        List<CodeChallengeSubmission> results = codeChallengeService.getAllSubmissionHistory(userId);
         return ResponseEntity.ok().body(results);
+    }
+
+    @GetMapping("/challenge/{questionId}")
+    public ResponseEntity<Object> getChallengeDetail(
+        @PathVariable Long questionId,
+        @RequestParam(required = false, name = "user") Long userId
+    ) {
+        CodeChallengeInfo challengeInfo = codeChallengeService.getChallengeInfo(questionId);
+        if (challengeInfo == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Map.of("error", "존재하지 않는 코딩 테스트 문제입니다.")
+            );
+        }
+
+        Object result = codeChallengeService.getChallengeDetail(challengeInfo, userId);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/challenges/{difficulty}")

@@ -11,8 +11,11 @@ import java.util.Optional;
 
 @Repository
 public interface CodeChallengeSubmissionRepository extends JpaRepository<CodeChallengeSubmission, Long> {
-    Optional<CodeChallengeSubmission> findByCodeChallengeInfoAndUser(CodeChallengeInfo codeChallengeInfo, User user);
+    Optional<CodeChallengeSubmission> findFirstByCodeChallengeInfoAndUserOrderBySubmittedAtDesc(CodeChallengeInfo codeChallengeInfo, User user);
+
+    List<CodeChallengeSubmission> findByCodeChallengeInfoAndUser(CodeChallengeInfo codeChallengeInfo, User user);
     List<CodeChallengeSubmission> findByUser(User user);
+
     int countByCodeChallengeInfo(CodeChallengeInfo codeChallengeInfo);
     int countByCodeChallengeInfoAndSuccess(CodeChallengeInfo codeChallengeInfo, Boolean success);
     int countByCodeChallengeInfoAndUser(CodeChallengeInfo codeChallengeInfo, User user);

@@ -5,6 +5,7 @@ import com.kh.totalproject.constant.SendTestcaseResultStatus;
 import com.kh.totalproject.dto.flask.callback.TestcaseResult;
 import com.kh.totalproject.dto.flask.request.JobRequest;
 import com.kh.totalproject.dto.request.SubmitCodeRequest;
+import com.kh.totalproject.dto.response.ChallengeDetailResponse;
 import com.kh.totalproject.dto.response.ChallengeMetaResponse;
 import com.kh.totalproject.entity.CodeChallengeInfo;
 import com.kh.totalproject.entity.CodeChallengeSubmission;
@@ -12,6 +13,7 @@ import com.kh.totalproject.entity.User;
 import com.kh.totalproject.exception.CustomHttpClientErrorException;
 import com.kh.totalproject.exception.CustomHttpServerErrorException;
 import com.kh.totalproject.exception.InvalidResponseBodyException;
+import com.kh.totalproject.exception.UnauthenticatedException;
 import com.kh.totalproject.repository.CodeChallengeInfoRepository;
 import com.kh.totalproject.repository.CodeChallengeSubmissionRepository;
 import com.kh.totalproject.repository.UserRepository;
@@ -225,15 +227,36 @@ public class CodeChallengeService {
         return codeChallengeInfoRepository.findById(questionId).orElse(null);
     }
 
-    public CodeChallengeSubmission getSubmissionHistory(Long userId, CodeChallengeInfo challengeInfo) {
-        User user = userRepository.findById(userId).orElse(null); // userId에 대한 유효성 검증이 끝났으므로 사실상 항상 조회 성공
-        if (user == null) { log.warn("존재하지 않는 회원이지만, 토큰에서 회원 번호 검증에는 통과하였음, userId={}", userId); return null; }
-        return codeChallengeSubmissionRepository.findByCodeChallengeInfoAndUser(challengeInfo, user).orElse(null);
+    public List<CodeChallengeSubmission> getSubmissionHistory(Long userId, CodeChallengeInfo challengeInfo) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) { throw new UnauthenticatedException(); }
+
+        return codeChallengeSubmissionRepository.findByCodeChallengeInfoAndUser(challengeInfo, user);
     }
 
-    public List<CodeChallengeSubmission> getSubmissionHistoryList(Long userId) {
+    public List<CodeChallengeSubmission> getAllSubmissionHistory(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
+        if (user == null) { throw new UnauthenticatedException(); }
+
         return codeChallengeSubmissionRepository.findByUser(user);
+    }
+
+    public ChallengeDetailResponse getChallengeDetail(CodeChallengeInfo challengeInfo, Long userId) {
+        User user = userId == null ? null : userRepository.findById(userId).orElse(null);
+        CodeChallengeSubmission submission = user != null ? codeChallengeSubmissionRepository.findFirstByCodeChallengeInfoAndUserOrderBySubmittedAtDesc(challengeInfo, user).orElse(null) : null;
+
+        log.info("challenge info : {}", challengeInfo);
+        log.info("submission : {}", submission);
+
+        return ChallengeDetailResponse.builder()
+                .title(challengeInfo.getTitle())
+                .description(challengeInfo.getDescription())
+                .cond(challengeInfo.getCond())
+                .difficulty(challengeInfo.getDifficulty())
+                .memoryLimit(challengeInfo.getMemoryLimit())
+                .runningTimeLimit(challengeInfo.getRunningTimeLimit())
+                .lastSubmittedCode(submission == null ? null : submission.getCode())
+                .build();
     }
 
     public List<ChallengeMetaResponse> getChallengeMetaList(ChallengeDifficulty difficulty, Long userId) {
