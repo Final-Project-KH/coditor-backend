@@ -77,7 +77,7 @@ public class Board {
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReportBoard> reportBoards = new ArrayList<>();
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
