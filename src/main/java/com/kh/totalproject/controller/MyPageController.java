@@ -40,6 +40,15 @@ public class MyPageController {
         return ResponseEntity.ok(myPageService.modifyMyProfile(authorizationHeader, userRequest));
     }
 
+
+    // 현재 비밀번호 확인 API 추가
+    @PostMapping("/profile-checkPw")
+    public ResponseEntity<Boolean> checkPw(@RequestHeader("Authorization") String authorizationHeader,
+                                           @RequestParam String inputPw) {
+        return ResponseEntity.ok(myPageService.checkPw(authorizationHeader, inputPw));
+    }
+
+
     // 내 정보에서 비밀번호 수정
     @PutMapping("/profile-changePw")
     public ResponseEntity<Boolean> changePw(@RequestHeader("Authorization") String authorizationHeader,
