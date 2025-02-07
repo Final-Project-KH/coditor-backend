@@ -70,6 +70,30 @@ public class MyPageService {
         }
     }
 
+    // 닉네임 중복 검사 로직
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname); // 닉네임이 DB에 없으면 사용 가능 (true 반환)
+    }
+
+    // 닉네임 변경 로직
+    public boolean changeNickname(String authorizationHeader, String newNickname) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        jwtUtil.getAuthentication(token);
+        Long userId = jwtUtil.extractUserId(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        // 중복 검사 추가
+        if (!isNicknameAvailable(newNickname)) {
+            throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+        }
+
+        user.setNickname(newNickname);
+        userRepository.save(user);
+        return true;
+    }
+
+
     // 현재 비밀번호 확인 메소드 추가
     public boolean checkPw(String authorizationHeader, String inputPw) {
         String token = authorizationHeader.replace("Bearer ", "");
@@ -85,7 +109,6 @@ public class MyPageService {
 
         return passwordEncoder.matches(inputPw, storedPassword);
     }
-
 
     // 내 비밀번호 변경
     public boolean changePw(String authorizationHeader, String inputPw, String newPw) {
