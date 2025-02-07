@@ -40,6 +40,21 @@ public class MyPageController {
         return ResponseEntity.ok(myPageService.modifyMyProfile(authorizationHeader, userRequest));
     }
 
+    // 닉네임 중복 검사 API 추가
+    @GetMapping("/profile/check-nickname")
+    public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
+        return ResponseEntity.ok(myPageService.isNicknameAvailable(nickname));
+    }
+
+
+    // 닉네임 변경 API
+    @PutMapping("/profile/change-nickname")
+    public ResponseEntity<Boolean> changeNickname(@RequestHeader("Authorization") String authorizationHeader,
+                                                  @RequestParam String newNickname) {
+        return ResponseEntity.ok(myPageService.changeNickname(authorizationHeader, newNickname));
+    }
+
+
 
     // 현재 비밀번호 확인 API 추가
     @PostMapping("/profile-checkPw")
