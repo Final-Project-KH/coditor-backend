@@ -78,7 +78,12 @@ public class MyPageService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
 
-        return passwordEncoder.matches(inputPw, user.getPassword());
+        String storedPassword = user.getPassword();
+        if (storedPassword == null) {
+            return true; // 비밀번호가 NULL이면 검증 자동 통과
+        }
+
+        return passwordEncoder.matches(inputPw, storedPassword);
     }
 
 
