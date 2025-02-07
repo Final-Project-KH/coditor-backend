@@ -107,6 +107,7 @@ public class SecurityConfig {
 
         configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedOrigin("http://localhost:5000");
+        configuration.addAllowedOrigin("https://coditor.site")
         configuration.addAllowedOrigin(Dotenv.load().get("FLASK_URL"));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
