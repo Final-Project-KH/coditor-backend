@@ -70,6 +70,18 @@ public class MyPageService {
         }
     }
 
+    // 현재 비밀번호 확인 메소드 추가
+    public boolean checkPw(String authorizationHeader, String inputPw) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        jwtUtil.getAuthentication(token);
+        Long userId = jwtUtil.extractUserId(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        return passwordEncoder.matches(inputPw, user.getPassword());
+    }
+
+
     // 내 비밀번호 변경
     public boolean changePw(String authorizationHeader, String inputPw, String newPw) {
         String token = authorizationHeader.replace("Bearer ", "");
