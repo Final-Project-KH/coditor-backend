@@ -90,20 +90,20 @@ public class MyPageService {
     // 내 비밀번호 변경
     public boolean changePw(String authorizationHeader, String inputPw, String newPw) {
         String token = authorizationHeader.replace("Bearer ", "");
-        // 토큰에서 인증 정보 확인
         jwtUtil.getAuthentication(token);
-        // Access 토큰에서 id 추출
         Long userId = jwtUtil.extractUserId(token);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다 "));
-        if (!passwordEncoder.matches(inputPw, user.getPassword())) {
-            return false;
-        } else {
-            String newHashedPw = passwordEncoder.encode(newPw);
-            user.setPassword(newHashedPw);
-            userRepository.save(user);
-            return true;
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        String storedPassword = user.getPassword();
+
+        if (storedPassword != null && !passwordEncoder.matches(inputPw, storedPassword)) {
+            return false; //  기존 비밀번호가 존재하는 경우, 검증 실패 시 변경 불가
         }
+
+        user.setPassword(passwordEncoder.encode(newPw)); // 새로운 비밀번호 설정
+        userRepository.save(user);
+        return true; // 변경 성공
     }
 
     //     내 작성글 보기,
