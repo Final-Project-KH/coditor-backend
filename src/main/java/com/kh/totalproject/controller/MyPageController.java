@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,6 +40,21 @@ public class MyPageController {
                                                   @RequestBody UserRequest userRequest) {
         return ResponseEntity.ok(myPageService.modifyMyProfile(authorizationHeader, userRequest));
     }
+
+    // 내 소개글 조회 메소드
+    @GetMapping("/userfeed")
+    public ResponseEntity<String> getUserIntroduction(@RequestHeader("Authorization") String authorizationHeader) {
+        return ResponseEntity.ok(myPageService.getUserIntroduction(authorizationHeader));
+    }
+
+    // 내 소개글 등록 메소드
+    @PostMapping("/userfeed")
+    public ResponseEntity<Boolean> saveUserIntroduction(@RequestHeader("Authorization") String authorizationHeader,
+                                                        @RequestBody Map<String, String> request) {
+        String introduction = request.get("introduction");
+        return ResponseEntity.ok(myPageService.saveUserIntroduction(authorizationHeader, introduction));
+    }
+
 
     // 닉네임 중복 검사 API 추가
     @GetMapping("/profile/check-nickname")
