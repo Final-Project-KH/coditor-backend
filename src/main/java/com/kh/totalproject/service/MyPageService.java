@@ -70,6 +70,33 @@ public class MyPageService {
         }
     }
 
+    // 내 소개글 조회 메소드
+    public String getUserIntroduction(String authorizationHeader) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        jwtUtil.getAuthentication(token);
+        Long userId = jwtUtil.extractUserId(token);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        return user.getIntroduction() != null ? user.getIntroduction() : "";
+    }
+
+
+    // 내 소개글 등록 메소드
+    public boolean saveUserIntroduction(String authorizationHeader, String introduction) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        jwtUtil.getAuthentication(token);
+        Long userId = jwtUtil.extractUserId(token);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        user.setIntroduction(introduction);
+        userRepository.save(user);
+        return true;
+    }
+
     // 닉네임 중복 검사 로직
     public boolean isNicknameAvailable(String nickname) {
         return !userRepository.existsByNickname(nickname); // 닉네임이 DB에 없으면 사용 가능 (true 반환)
