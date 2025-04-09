@@ -1,8 +1,12 @@
-# 🚀 Coditor - 개발자를 위한 종합 학습 플랫폼
+# 🚀 Coditor - 개발자를 위한 종합 학습 플랫폼 (BE)
 **프로그래밍 학습, 코딩 테스트, 개발자 커뮤니티가 통합된 올인원 플랫폼입니다.**  
 프로그래밍 언어 학습부터 실전 코딩 테스트, 스터디 모집까지 개발자 성장을 위한 모든 과정을 지원합니다.
 
+Coditor 🔗<a href="https://coditor.site" target="_blank">**링크**</a>
+
+
 <br /><br />
+
 
 
 
@@ -37,15 +41,12 @@ Frontend (React) <-> Backend (Spring Boot) <-> Judge System (Flask/Celery/Redis)
 - 개발 분야별 로드맵 제공
 - IT 용어 사전 및 개발 도구 모음
 - 외부 코딩 테스트 사이트 정보
-  
+
 <br /><br />
 
 
 
 
-## 🛠️ 핵심 기술 스택 (FE/BE)
-### Frontend
-- React, Redux
-
+## 🛠️ 핵심 기술 스택 (BE)
 ### Backend
 - Spring Boot, JPA, MySQL
