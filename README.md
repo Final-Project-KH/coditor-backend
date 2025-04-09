@@ -1,7 +1,51 @@
-# BACK_SpringBoot
+# 🚀 Coditor - 개발자를 위한 종합 학습 플랫폼
+**프로그래밍 학습, 코딩 테스트, 개발자 커뮤니티가 통합된 올인원 플랫폼입니다.**  
+프로그래밍 언어 학습부터 실전 코딩 테스트, 스터디 모집까지 개발자 성장을 위한 모든 과정을 지원합니다.
 
-# Spring Boot Version 3.4.1
-# JWT Version -> 0.12.6 -> Need Downgrade Test (Not yet)
-# 상원씨 Exception Handler 추가해야함 (Not yet)
-# Websoket 변경해서 추가해야함 (Not yet)
-# 회원가입 시 이메일 가입 여부 서비스 구현하는거 빼먹음
+<br /><br />
+
+
+
+## 🧱 시스템 아키텍처
+```
+Frontend (React) <-> Backend (Spring Boot) <-> Judge System (Flask/Celery/Redis)
+```
+- MSA 기반 설계로 확장성과 안정성을 확보하였습니다.
+- 코드 채점은 독립된 마이크로서비스로 분리하여 시스템 안정성을 보장합니다.
+
+<br /><br />
+
+
+
+
+## ✨ 주요 기능
+### 프로그래밍 학습
+- 다양한 프로그래밍 언어(C, C++, Java, JavaScript, Python) 이론 학습
+- 예제 코드 기반 실습 환경 제공
+- 학습 진도율 추적 및 관리
+
+### 코딩 테스트 (Java17)
+- 실제 IDE와 유사한 코드 에디터 환경 제공
+- 컴파일/런타임 에러, 메모리 제한 초과 등 상세 피드백
+- 난이도별 문제 제공 및 진도 관리
+
+### 개발자 커뮤니티
+- 개발자 중심 게시판 (질문/취업/진로/스터디)
+- 팀 프로젝트 모집 지원
+
+### 개발자 리소스
+- 개발 분야별 로드맵 제공
+- IT 용어 사전 및 개발 도구 모음
+- 외부 코딩 테스트 사이트 정보
+  
+<br /><br />
+
+
+
+
+## 🛠️ 핵심 기술 스택 (FE/BE)
+### Frontend
+- React, Redux
+
+### Backend
+- Spring Boot, JPA, MySQL
